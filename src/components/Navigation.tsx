@@ -1,17 +1,19 @@
 
 import { useState } from "react";
 import { Menu, X, Phone, Mail } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+  const isDashboard = location.pathname === '/dashboard';
 
   const navItems = [
-    { name: "Home", href: "#home" },
-    { name: "Services", href: "#services" },
-    { name: "About", href: "#about" },
-    { name: "Projects", href: "#projects" },
-    { name: "Contact", href: "#contact" },
+    { name: "Home", href: "/#home" },
+    { name: "Services", href: "/#services" },
+    { name: "About", href: "/#about" },
+    { name: "Projects", href: "/#projects" },
+    { name: "Contact", href: "/#contact" },
   ];
 
   return (
@@ -26,7 +28,7 @@ export const Navigation = () => {
           
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
-              {navItems.map((item) => (
+              {!isDashboard && navItems.map((item) => (
                 <a
                   key={item.name}
                   href={item.href}
@@ -35,11 +37,19 @@ export const Navigation = () => {
                   {item.name}
                 </a>
               ))}
+              {isDashboard && (
+                <Link
+                  to="/"
+                  className="text-gray-700 hover:text-green-800 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                >
+                  Back to Website
+                </Link>
+              )}
               <Link
                 to="/dashboard"
                 className="bg-green-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors duration-200"
               >
-                Dashboard
+                {isDashboard ? "Dashboard" : "Admin Dashboard"}
               </Link>
             </div>
           </div>
@@ -69,7 +79,7 @@ export const Navigation = () => {
       {isOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white shadow-lg">
-            {navItems.map((item) => (
+            {!isDashboard && navItems.map((item) => (
               <a
                 key={item.name}
                 href={item.href}
@@ -79,12 +89,21 @@ export const Navigation = () => {
                 {item.name}
               </a>
             ))}
+            {isDashboard && (
+              <Link
+                to="/"
+                className="text-gray-700 hover:text-green-800 block px-3 py-2 rounded-md text-base font-medium"
+                onClick={() => setIsOpen(false)}
+              >
+                Back to Website
+              </Link>
+            )}
             <Link
               to="/dashboard"
               className="bg-green-800 text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-green-700"
               onClick={() => setIsOpen(false)}
             >
-              Dashboard
+              {isDashboard ? "Dashboard" : "Admin Dashboard"}
             </Link>
           </div>
         </div>
