@@ -6,6 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 
 interface Lead {
@@ -23,6 +26,14 @@ export const LeadsManager = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newLead, setNewLead] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    service: '',
+    message: ''
+  });
 
   useEffect(() => {
     const storedLeads = JSON.parse(localStorage.getItem('leads') || '[]');
@@ -32,6 +43,42 @@ export const LeadsManager = () => {
   const saveLeads = (updatedLeads: Lead[]) => {
     localStorage.setItem('leads', JSON.stringify(updatedLeads));
     setLeads(updatedLeads);
+  };
+
+  const addLead = () => {
+    if (!newLead.name || !newLead.email || !newLead.message) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields (Name, Email, Message)",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const lead: Lead = {
+      id: Date.now(),
+      ...newLead,
+      status: 'New',
+      createdAt: new Date().toISOString()
+    };
+
+    const updatedLeads = [...leads, lead];
+    saveLeads(updatedLeads);
+    
+    setNewLead({
+      name: '',
+      email: '',
+      phone: '',
+      service: '',
+      message: ''
+    });
+    
+    setIsAddDialogOpen(false);
+    
+    toast({
+      title: "Lead Added",
+      description: "New lead has been added successfully",
+    });
   };
 
   const updateLeadStatus = (id: number, newStatus: string) => {
@@ -80,10 +127,87 @@ export const LeadsManager = () => {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             Lead Management
-            <Button className="bg-green-800 hover:bg-green-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Lead
-            </Button>
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-green-800 hover:bg-green-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Lead
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Add New Lead</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="name">Full Name *</Label>
+                      <Input
+                        id="name"
+                        value={newLead.name}
+                        onChange={(e) => setNewLead({...newLead, name: e.target.value})}
+                        placeholder="Enter full name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="email">Email *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={newLead.email}
+                        onChange={(e) => setNewLead({...newLead, email: e.target.value})}
+                        placeholder="Enter email"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="phone">Phone</Label>
+                      <Input
+                        id="phone"
+                        value={newLead.phone}
+                        onChange={(e) => setNewLead({...newLead, phone: e.target.value})}
+                        placeholder="Enter phone number"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="service">Service</Label>
+                      <Select value={newLead.service} onValueChange={(value) => setNewLead({...newLead, service: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select service" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Custom Home Building">Custom Home Building</SelectItem>
+                          <SelectItem value="Commercial Construction">Commercial Construction</SelectItem>
+                          <SelectItem value="Renovations & Remodeling">Renovations & Remodeling</SelectItem>
+                          <SelectItem value="Interior Finishing">Interior Finishing</SelectItem>
+                          <SelectItem value="General Contracting">General Contracting</SelectItem>
+                          <SelectItem value="Sustainable Building">Sustainable Building</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="message">Message *</Label>
+                    <Textarea
+                      id="message"
+                      value={newLead.message}
+                      onChange={(e) => setNewLead({...newLead, message: e.target.value})}
+                      placeholder="Enter project details or message"
+                      rows={4}
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={addLead} className="bg-green-800 hover:bg-green-700">
+                      Add Lead
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </CardTitle>
         </CardHeader>
         <CardContent>
