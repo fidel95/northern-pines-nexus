@@ -21,12 +21,12 @@ export const Navigation = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
-            <Link to="/" className="text-2xl font-bold text-green-800">
+            <Link to="/" className="text-lg sm:text-2xl font-bold text-green-800 truncate">
               Northern Pines Construction
             </Link>
           </div>
           
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <div className="ml-10 flex items-baseline space-x-4">
               {!isDashboard && navItems.map((item) => (
                 <a
@@ -54,21 +54,22 @@ export const Navigation = () => {
             </div>
           </div>
           
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden xl:flex items-center space-x-4">
             <div className="flex items-center text-sm text-gray-600">
               <Phone className="w-4 h-4 mr-1" />
-              (555) 123-4567
+              <span className="hidden 2xl:inline">(555) 123-4567</span>
             </div>
             <div className="flex items-center text-sm text-gray-600">
               <Mail className="w-4 h-4 mr-1" />
-              info@northernpines.com
+              <span className="hidden 2xl:inline">info@northernpines.com</span>
             </div>
           </div>
 
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="text-gray-700 hover:text-green-800"
+              className="text-gray-700 hover:text-green-800 p-2"
+              aria-label="Toggle menu"
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -77,8 +78,8 @@ export const Navigation = () => {
       </div>
 
       {isOpen && (
-        <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white shadow-lg">
+        <div className="lg:hidden">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white shadow-lg border-t">
             {!isDashboard && navItems.map((item) => (
               <a
                 key={item.name}
@@ -100,11 +101,23 @@ export const Navigation = () => {
             )}
             <Link
               to="/dashboard"
-              className="bg-green-800 text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-green-700"
+              className="bg-green-800 text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-green-700 w-full text-center"
               onClick={() => setIsOpen(false)}
             >
               {isDashboard ? "Dashboard" : "Admin Dashboard"}
             </Link>
+            <div className="pt-4 pb-2 border-t border-gray-200 mt-4">
+              <div className="flex items-center justify-center space-x-6 text-sm text-gray-600">
+                <div className="flex items-center">
+                  <Phone className="w-4 h-4 mr-1" />
+                  (555) 123-4567
+                </div>
+                <div className="flex items-center">
+                  <Mail className="w-4 h-4 mr-1" />
+                  info@northernpines.com
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -28,16 +28,16 @@ export const Projects = () => {
   ];
 
   return (
-    <section id="projects" className="py-20 bg-gray-50">
+    <section id="projects" className="py-12 sm:py-16 lg:py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">Recent Projects</h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+        <div className="text-center mb-12 sm:mb-16">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Recent Projects</h2>
+          <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto px-4">
             Explore our portfolio of completed projects showcasing quality craftsmanship and innovative design
           </p>
         </div>
         
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
           {projects.map((project, index) => (
             <div
               key={index}
@@ -47,18 +47,18 @@ export const Projects = () => {
                 <img
                   src={project.image}
                   alt={project.title}
-                  className="w-full h-64 object-cover transform hover:scale-110 transition-transform duration-500"
+                  className="w-full h-48 sm:h-64 object-cover transform hover:scale-110 transition-transform duration-500"
                 />
                 <div className="absolute top-4 left-4">
-                  <span className="bg-green-800 text-white px-3 py-1 rounded-full text-sm font-medium">
+                  <span className="bg-green-800 text-white px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
                     {project.category}
                   </span>
                 </div>
               </div>
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{project.title}</h3>
-                <p className="text-gray-600 mb-4">{project.description}</p>
-                <button className="text-green-800 font-semibold hover:text-green-700 transition-colors duration-200">
+              <div className="p-4 sm:p-6">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">{project.title}</h3>
+                <p className="text-gray-600 mb-4 text-sm sm:text-base">{project.description}</p>
+                <button className="text-green-800 font-semibold hover:text-green-700 transition-colors duration-200 text-sm sm:text-base">
                   View Details →
                 </button>
               </div>
@@ -66,8 +66,8 @@ export const Projects = () => {
           ))}
         </div>
         
-        <div className="text-center mt-12">
-          <button className="bg-green-800 text-white px-8 py-4 rounded-lg font-semibold hover:bg-green-700 transition-colors duration-200">
+        <div className="text-center mt-8 sm:mt-12">
+          <button className="bg-green-800 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-semibold hover:bg-green-700 transition-colors duration-200 text-sm sm:text-base">
             View All Projects
           </button>
         </div>
