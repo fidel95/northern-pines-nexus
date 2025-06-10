@@ -7,19 +7,48 @@ import { LeadsManager } from "@/components/LeadsManager";
 import { InventoryManager } from "@/components/InventoryManager";
 import { DashboardStats } from "@/components/DashboardStats";
 import { AdminManager } from "@/components/AdminManager";
-import { AdminLogin } from "@/components/AdminLogin";
 import { Navigation } from "@/components/Navigation";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/SupabaseAuthContext";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 const Dashboard = () => {
-  const { isAuthenticated, currentAdmin, logout } = useAuth();
+  const { user, signOut, isAdmin, isLoading } = useAuth();
+  const navigate = useNavigate();
 
-  if (!isAuthenticated) {
-    return <AdminLogin />;
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate('/auth');
+    }
+  }, [user, isLoading, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
   }
 
-  const handleLogout = () => {
-    logout();
+  if (!user) {
+    return null;
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
+          <p className="text-gray-600 mb-4">You need admin privileges to access this dashboard.</p>
+          <Button onClick={() => signOut()}>Sign Out</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/auth');
   };
 
   return (
@@ -29,7 +58,7 @@ const Dashboard = () => {
         <div className="mb-8 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-            <p className="text-gray-600">Welcome back, {currentAdmin?.username}</p>
+            <p className="text-gray-600">Welcome back, {user.email}</p>
           </div>
           <Button 
             onClick={handleLogout}

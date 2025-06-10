@@ -8,119 +8,118 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface InventoryItem {
-  id: number;
+  id: string;
   name: string;
   category: string;
   quantity: number;
-  minStock: number;
+  min_stock: number;
   unit: string;
   price: number;
   supplier: string;
-  lastUpdated: string;
+  created_at: string;
 }
 
 export const InventoryManager = () => {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     category: '',
     quantity: 0,
-    minStock: 0,
+    min_stock: 0,
     unit: '',
     price: 0,
     supplier: ''
   });
 
-  useEffect(() => {
-    const storedInventory = JSON.parse(localStorage.getItem('inventory') || '[]');
-    if (storedInventory.length === 0) {
-      // Initialize with sample data
-      const sampleItems = [
-        {
-          id: 1,
-          name: "2x4 Lumber",
-          category: "Lumber",
-          quantity: 150,
-          minStock: 50,
-          unit: "pieces",
-          price: 8.50,
-          supplier: "Pine Valley Lumber",
-          lastUpdated: new Date().toISOString()
-        },
-        {
-          id: 2,
-          name: "Concrete Mix",
-          category: "Concrete",
-          quantity: 25,
-          minStock: 10,
-          unit: "bags",
-          price: 12.99,
-          supplier: "Northern Concrete Supply",
-          lastUpdated: new Date().toISOString()
-        },
-        {
-          id: 3,
-          name: "Roofing Shingles",
-          category: "Roofing",
-          quantity: 8,
-          minStock: 15,
-          unit: "bundles",
-          price: 89.99,
-          supplier: "Alpine Roofing Materials",
-          lastUpdated: new Date().toISOString()
-        }
-      ];
-      localStorage.setItem('inventory', JSON.stringify(sampleItems));
-      setInventory(sampleItems);
-    } else {
-      setInventory(storedInventory);
+  const fetchInventory = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('inventory')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setInventory(data || []);
+    } catch (error) {
+      console.error('Error fetching inventory:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch inventory",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchInventory();
   }, []);
 
-  const saveInventory = (updatedInventory: InventoryItem[]) => {
-    localStorage.setItem('inventory', JSON.stringify(updatedInventory));
-    setInventory(updatedInventory);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newItem: InventoryItem = {
-      id: Date.now(),
-      ...formData,
-      lastUpdated: new Date().toISOString()
-    };
     
-    const updatedInventory = [...inventory, newItem];
-    saveInventory(updatedInventory);
-    
-    setFormData({
-      name: '',
-      category: '',
-      quantity: 0,
-      minStock: 0,
-      unit: '',
-      price: 0,
-      supplier: ''
-    });
-    setIsDialogOpen(false);
-    
-    toast({
-      title: "Item Added",
-      description: "Inventory item has been added successfully",
-    });
+    try {
+      const { error } = await supabase
+        .from('inventory')
+        .insert([formData]);
+
+      if (error) throw error;
+
+      await fetchInventory();
+      setFormData({
+        name: '',
+        category: '',
+        quantity: 0,
+        min_stock: 0,
+        unit: '',
+        price: 0,
+        supplier: ''
+      });
+      setIsDialogOpen(false);
+      
+      toast({
+        title: "Item Added",
+        description: "Inventory item has been added successfully",
+      });
+    } catch (error) {
+      console.error('Error adding item:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add inventory item",
+        variant: "destructive"
+      });
+    }
   };
 
-  const deleteItem = (id: number) => {
-    const updatedInventory = inventory.filter(item => item.id !== id);
-    saveInventory(updatedInventory);
-    toast({
-      title: "Item Deleted",
-      description: "Inventory item has been removed successfully",
-    });
+  const deleteItem = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('inventory')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await fetchInventory();
+      toast({
+        title: "Item Deleted",
+        description: "Inventory item has been removed successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete inventory item",
+        variant: "destructive"
+      });
+    }
   };
 
   const filteredInventory = inventory.filter(item =>
@@ -130,13 +129,17 @@ export const InventoryManager = () => {
   );
 
   const getStockStatus = (item: InventoryItem) => {
-    if (item.quantity <= item.minStock) {
+    if (item.quantity <= item.min_stock) {
       return { status: 'Low Stock', color: 'bg-red-100 text-red-800' };
-    } else if (item.quantity <= item.minStock * 1.5) {
+    } else if (item.quantity <= item.min_stock * 1.5) {
       return { status: 'Running Low', color: 'bg-yellow-100 text-yellow-800' };
     }
     return { status: 'In Stock', color: 'bg-green-100 text-green-800' };
   };
+
+  if (loading) {
+    return <div className="text-center py-8">Loading inventory...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -192,8 +195,8 @@ export const InventoryManager = () => {
                       <Input
                         id="minStock"
                         type="number"
-                        value={formData.minStock}
-                        onChange={(e) => setFormData({...formData, minStock: Number(e.target.value)})}
+                        value={formData.min_stock}
+                        onChange={(e) => setFormData({...formData, min_stock: Number(e.target.value)})}
                         required
                       />
                     </div>
@@ -260,7 +263,7 @@ export const InventoryManager = () => {
                       <p className="text-sm text-gray-600">{item.category}</p>
                     </div>
                     <div className="flex gap-1">
-                      {item.quantity <= item.minStock && (
+                      {item.quantity <= item.min_stock && (
                         <AlertTriangle className="w-5 h-5 text-red-500" />
                       )}
                       <Button variant="outline" size="sm">
@@ -284,7 +287,7 @@ export const InventoryManager = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Min Stock:</span>
-                      <span>{item.minStock} {item.unit}</span>
+                      <span>{item.min_stock} {item.unit}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Price:</span>

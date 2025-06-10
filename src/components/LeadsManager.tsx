@@ -10,16 +10,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Lead {
-  id: number;
+  id: string;
   name: string;
   email: string;
   phone: string;
   service: string;
   message: string;
   status: string;
-  createdAt: string;
+  created_at: string;
 }
 
 export const LeadsManager = () => {
@@ -27,6 +28,7 @@ export const LeadsManager = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [newLead, setNewLead] = useState({
     name: '',
     email: '',
@@ -35,17 +37,32 @@ export const LeadsManager = () => {
     message: ''
   });
 
-  useEffect(() => {
-    const storedLeads = JSON.parse(localStorage.getItem('leads') || '[]');
-    setLeads(storedLeads);
-  }, []);
+  const fetchLeads = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('leads')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-  const saveLeads = (updatedLeads: Lead[]) => {
-    localStorage.setItem('leads', JSON.stringify(updatedLeads));
-    setLeads(updatedLeads);
+      if (error) throw error;
+      setLeads(data || []);
+    } catch (error) {
+      console.error('Error fetching leads:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch leads",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const addLead = () => {
+  useEffect(() => {
+    fetchLeads();
+  }, []);
+
+  const addLead = async () => {
     if (!newLead.name || !newLead.email || !newLead.message) {
       toast({
         title: "Error",
@@ -55,56 +72,92 @@ export const LeadsManager = () => {
       return;
     }
 
-    const lead: Lead = {
-      id: Date.now(),
-      ...newLead,
-      status: 'New',
-      createdAt: new Date().toISOString()
-    };
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .insert([{
+          ...newLead,
+          status: 'New'
+        }]);
 
-    const updatedLeads = [...leads, lead];
-    saveLeads(updatedLeads);
-    
-    setNewLead({
-      name: '',
-      email: '',
-      phone: '',
-      service: '',
-      message: ''
-    });
-    
-    setIsAddDialogOpen(false);
-    
-    toast({
-      title: "Lead Added",
-      description: "New lead has been added successfully",
-    });
+      if (error) throw error;
+
+      await fetchLeads();
+      setNewLead({
+        name: '',
+        email: '',
+        phone: '',
+        service: '',
+        message: ''
+      });
+      setIsAddDialogOpen(false);
+      
+      toast({
+        title: "Lead Added",
+        description: "New lead has been added successfully",
+      });
+    } catch (error) {
+      console.error('Error adding lead:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add lead",
+        variant: "destructive"
+      });
+    }
   };
 
-  const updateLeadStatus = (id: number, newStatus: string) => {
-    const updatedLeads = leads.map(lead =>
-      lead.id === id ? { ...lead, status: newStatus } : lead
-    );
-    saveLeads(updatedLeads);
-    toast({
-      title: "Lead Updated",
-      description: `Lead status changed to ${newStatus}`,
-    });
+  const updateLeadStatus = async (id: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await fetchLeads();
+      toast({
+        title: "Lead Updated",
+        description: `Lead status changed to ${newStatus}`,
+      });
+    } catch (error) {
+      console.error('Error updating lead:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update lead",
+        variant: "destructive"
+      });
+    }
   };
 
-  const deleteLead = (id: number) => {
-    const updatedLeads = leads.filter(lead => lead.id !== id);
-    saveLeads(updatedLeads);
-    toast({
-      title: "Lead Deleted",
-      description: "Lead has been removed successfully",
-    });
+  const deleteLead = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await fetchLeads();
+      toast({
+        title: "Lead Deleted",
+        description: "Lead has been removed successfully",
+      });
+    } catch (error) {
+      console.error('Error deleting lead:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete lead",
+        variant: "destructive"
+      });
+    }
   };
 
   const filteredLeads = leads.filter(lead => {
     const matchesSearch = lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         lead.service.toLowerCase().includes(searchTerm.toLowerCase());
+                         (lead.service && lead.service.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus = statusFilter === "all" || lead.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -120,6 +173,10 @@ export const LeadsManager = () => {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  if (loading) {
+    return <div className="text-center py-8">Loading leads...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -251,9 +308,9 @@ export const LeadsManager = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
                       <p><strong>Email:</strong> {lead.email}</p>
-                      <p><strong>Phone:</strong> {lead.phone}</p>
-                      <p><strong>Service:</strong> {lead.service}</p>
-                      <p><strong>Date:</strong> {new Date(lead.createdAt).toLocaleDateString()}</p>
+                      <p><strong>Phone:</strong> {lead.phone || 'N/A'}</p>
+                      <p><strong>Service:</strong> {lead.service || 'N/A'}</p>
+                      <p><strong>Date:</strong> {new Date(lead.created_at).toLocaleDateString()}</p>
                     </div>
                     <p className="text-sm text-gray-700 mt-2">
                       <strong>Message:</strong> {lead.message}
