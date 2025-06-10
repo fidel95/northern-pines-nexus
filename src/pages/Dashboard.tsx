@@ -24,8 +24,8 @@ const Dashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-xl text-white">Loading...</div>
       </div>
     );
   }
@@ -36,11 +36,11 @@ const Dashboard = () => {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-          <p className="text-gray-600 mb-4">You need admin privileges to access this dashboard.</p>
-          <Button onClick={() => signOut()}>Sign Out</Button>
+          <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
+          <p className="text-gray-400 mb-4">You need admin privileges to access this dashboard.</p>
+          <Button onClick={() => signOut()} className="bg-black hover:bg-gray-800">Sign Out</Button>
         </div>
       </div>
     );
@@ -52,18 +52,18 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-900">
       <Navigation />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-            <p className="text-gray-600">Welcome back, {user.email}</p>
+            <h1 className="text-3xl font-bold text-white mb-2">Admin Dashboard</h1>
+            <p className="text-gray-400">Welcome back, {user.email}</p>
           </div>
           <Button 
             onClick={handleLogout}
             variant="outline"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 border-gray-600 text-gray-300 hover:bg-gray-800"
           >
             <LogOut className="w-4 h-4" />
             Logout
@@ -73,10 +73,10 @@ const Dashboard = () => {
         <DashboardStats />
         
         <Tabs defaultValue="leads" className="mt-8">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="leads">Lead Management</TabsTrigger>
-            <TabsTrigger value="inventory">Inventory Management</TabsTrigger>
-            <TabsTrigger value="admins">Admin Management</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 bg-gray-800 border-gray-700">
+            <TabsTrigger value="leads" className="text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white">Lead Management</TabsTrigger>
+            <TabsTrigger value="inventory" className="text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white">Inventory Management</TabsTrigger>
+            <TabsTrigger value="admins" className="text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white">Admin Management</TabsTrigger>
           </TabsList>
           
           <TabsContent value="leads">

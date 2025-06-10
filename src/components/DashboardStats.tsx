@@ -58,39 +58,39 @@ export const DashboardStats = () => {
       title: "Total Leads",
       value: stats.totalLeads,
       subtitle: `${stats.newLeads} new this week`,
-      color: "bg-blue-500"
+      color: "bg-black"
     },
     {
       icon: TrendingUp,
       title: "Active Projects",
       value: stats.activeProjects,
       subtitle: "Projects in progress",
-      color: "bg-green-500"
+      color: "bg-gray-800"
     },
     {
       icon: Package,
       title: "Inventory Items",
       value: stats.totalItems,
       subtitle: `${stats.lowStockItems} low stock alerts`,
-      color: "bg-purple-500"
+      color: "bg-gray-700"
     },
     {
       icon: Clock,
       title: "Pending Quotes",
       value: stats.pendingQuotes,
       subtitle: "Awaiting response",
-      color: "bg-yellow-500"
+      color: "bg-gray-600"
     }
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {statsData.map((stat, index) => (
-        <div key={index} className="bg-white rounded-lg shadow-md p-6">
+        <div key={index} className="bg-gray-800 border border-gray-700 rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-              <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+              <p className="text-sm font-medium text-gray-400">{stat.title}</p>
+              <p className="text-3xl font-bold text-white">{stat.value}</p>
               <p className="text-sm text-gray-500">{stat.subtitle}</p>
             </div>
             <div className={`${stat.color} rounded-full p-3`}>

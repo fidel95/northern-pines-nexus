@@ -53,7 +53,7 @@ export const AdminManager = () => {
     e.preventDefault();
     
     try {
-      // First create the user account
+      // First create the user account using admin API
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: formData.email,
         password: formData.password,
@@ -137,48 +137,50 @@ export const AdminManager = () => {
   }
 
   return (
-    <Card>
+    <Card className="bg-gray-800 border-gray-700">
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className="flex items-center justify-between text-white">
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5" />
             Admin Management
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-green-800 hover:bg-green-700">
+              <Button className="bg-black hover:bg-gray-700 text-white">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Admin
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="bg-gray-800 border-gray-700">
               <DialogHeader>
-                <DialogTitle>Add New Admin</DialogTitle>
+                <DialogTitle className="text-white">Add New Admin</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email" className="text-gray-300">Email</Label>
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     placeholder="Enter email"
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                     required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className="text-gray-300">Password</Label>
                   <Input
                     id="password"
                     type="password"
                     value={formData.password}
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                     placeholder="Enter password"
+                    className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full">Add Admin</Button>
+                <Button type="submit" className="w-full bg-black hover:bg-gray-700">Add Admin</Button>
               </form>
             </DialogContent>
           </Dialog>
@@ -187,12 +189,12 @@ export const AdminManager = () => {
       <CardContent>
         <div className="space-y-3">
           {admins.map((admin) => (
-            <div key={admin.id} className="flex items-center justify-between p-3 border rounded-lg">
+            <div key={admin.id} className="flex items-center justify-between p-3 border border-gray-600 rounded-lg bg-gray-700">
               <div className="flex items-center gap-3">
-                <User className="w-5 h-5 text-gray-500" />
+                <User className="w-5 h-5 text-gray-400" />
                 <div>
-                  <p className="font-medium">{admin.username}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-medium text-white">{admin.username}</p>
+                  <p className="text-sm text-gray-400">
                     Created: {new Date(admin.created_at).toLocaleDateString()}
                     {user?.id === admin.user_id && " (Current)"}
                   </p>
@@ -202,7 +204,7 @@ export const AdminManager = () => {
                 variant="outline" 
                 size="sm" 
                 onClick={() => handleDelete(admin.id, admin.user_id)}
-                className="text-red-600 hover:text-red-700"
+                className="text-red-400 hover:text-red-300 border-gray-600 hover:bg-gray-600"
                 disabled={admins.length === 1 || user?.id === admin.user_id}
               >
                 <Trash2 className="w-4 h-4" />
@@ -211,7 +213,7 @@ export const AdminManager = () => {
           ))}
         </div>
         {admins.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-400">
             No admins found.
           </div>
         )}
