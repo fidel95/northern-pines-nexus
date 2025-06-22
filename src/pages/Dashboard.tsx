@@ -7,6 +7,9 @@ import { LeadsManager } from "@/components/LeadsManager";
 import { InventoryManager } from "@/components/InventoryManager";
 import { DashboardStats } from "@/components/DashboardStats";
 import { AdminManager } from "@/components/AdminManager";
+import { SalespeopleManager } from "@/components/SalespeopleManager";
+import { QuotesManager } from "@/components/QuotesManager";
+import { CalendarManager } from "@/components/CalendarManager";
 import { Navigation } from "@/components/Navigation";
 import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useNavigate } from "react-router-dom";
@@ -73,14 +76,29 @@ const Dashboard = () => {
         <DashboardStats />
         
         <Tabs defaultValue="leads" className="mt-8">
-          <TabsList className="grid w-full grid-cols-3 bg-gray-800 border-gray-700">
-            <TabsTrigger value="leads" className="text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white">Lead Management</TabsTrigger>
-            <TabsTrigger value="inventory" className="text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white">Inventory Management</TabsTrigger>
-            <TabsTrigger value="admins" className="text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white">Admin Management</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-6 bg-gray-800 border-gray-700">
+            <TabsTrigger value="leads" className="text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white">Leads</TabsTrigger>
+            <TabsTrigger value="quotes" className="text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white">Quotes</TabsTrigger>
+            <TabsTrigger value="salespeople" className="text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white">Salespeople</TabsTrigger>
+            <TabsTrigger value="calendar" className="text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white">Calendar</TabsTrigger>
+            <TabsTrigger value="inventory" className="text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white">Inventory</TabsTrigger>
+            <TabsTrigger value="admins" className="text-gray-300 data-[state=active]:bg-black data-[state=active]:text-white">Admins</TabsTrigger>
           </TabsList>
           
           <TabsContent value="leads">
             <LeadsManager />
+          </TabsContent>
+          
+          <TabsContent value="quotes">
+            <QuotesManager />
+          </TabsContent>
+          
+          <TabsContent value="salespeople">
+            <SalespeopleManager />
+          </TabsContent>
+          
+          <TabsContent value="calendar">
+            <CalendarManager />
           </TabsContent>
           
           <TabsContent value="inventory">

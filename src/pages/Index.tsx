@@ -9,8 +9,7 @@ import { Footer } from "@/components/Footer";
 import { Navigation } from "@/components/Navigation";
 import { ContentEditor } from "@/components/ContentEditor";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { LogIn, Edit, Eye } from "lucide-react";
+import { Edit, Eye } from "lucide-react";
 import { useAuth } from "@/contexts/SupabaseAuthContext";
 
 interface ContentSection {
@@ -91,9 +90,9 @@ const Index = () => {
     <div className="min-h-screen">
       <Navigation />
       
-      {/* Admin Controls */}
-      <div className="fixed top-4 right-4 z-50 flex gap-2">
-        {user && isAdmin ? (
+      {/* Admin Edit Controls - Only show if admin is logged in */}
+      {user && isAdmin && (
+        <div className="fixed top-4 right-4 z-50">
           <Button
             onClick={() => setIsEditMode(!isEditMode)}
             variant="outline"
@@ -102,15 +101,8 @@ const Index = () => {
             {isEditMode ? <Eye className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
             {isEditMode ? 'Preview' : 'Edit Page'}
           </Button>
-        ) : (
-          <Link to="/auth">
-            <Button variant="outline" className="bg-white/90 backdrop-blur-sm hover:bg-white">
-              <LogIn className="w-4 h-4 mr-2" />
-              Admin Login
-            </Button>
-          </Link>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Edit Mode */}
       {isEditMode && user && isAdmin && (

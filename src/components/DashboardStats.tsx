@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Users, Package, TrendingUp, Clock } from "lucide-react";
+import { Users, Package, TrendingUp, Clock, FileText, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const DashboardStats = () => {
@@ -10,7 +10,9 @@ export const DashboardStats = () => {
     activeProjects: 0,
     totalItems: 0,
     lowStockItems: 0,
-    pendingQuotes: 0
+    pendingQuotes: 0,
+    totalSalespeople: 0,
+    totalQuotes: 0
   });
 
   useEffect(() => {
@@ -26,14 +28,28 @@ export const DashboardStats = () => {
           .from('inventory')
           .select('quantity, min_stock');
 
+        // Fetch quotes data
+        const { data: quotes } = await supabase
+          .from('quotes')
+          .select('status');
+
+        // Fetch salespeople data
+        const { data: salespeople } = await supabase
+          .from('salespeople')
+          .select('id')
+          .eq('active', true);
+
         if (leads) {
           const totalLeads = leads.length;
           const newLeads = leads.filter(lead => lead.status === 'New').length;
           const activeProjects = leads.filter(lead => lead.status === 'In Progress').length;
-          const pendingQuotes = leads.filter(lead => lead.status === 'Quoted').length;
 
           const totalItems = inventory?.length || 0;
           const lowStockItems = inventory?.filter(item => item.quantity <= item.min_stock).length || 0;
+
+          const pendingQuotes = quotes?.filter(quote => quote.status === 'pending').length || 0;
+          const totalQuotes = quotes?.length || 0;
+          const totalSalespeople = salespeople?.length || 0;
 
           setStats({
             totalLeads,
@@ -41,7 +57,9 @@ export const DashboardStats = () => {
             activeProjects,
             totalItems,
             lowStockItems,
-            pendingQuotes
+            pendingQuotes,
+            totalSalespeople,
+            totalQuotes
           });
         }
       } catch (error) {
@@ -61,11 +79,25 @@ export const DashboardStats = () => {
       color: "bg-black"
     },
     {
+      icon: FileText,
+      title: "Pending Quotes",
+      value: stats.pendingQuotes,
+      subtitle: `${stats.totalQuotes} total quotes`,
+      color: "bg-gray-800"
+    },
+    {
+      icon: User,
+      title: "Active Salespeople",
+      value: stats.totalSalespeople,
+      subtitle: "Team members",
+      color: "bg-gray-700"
+    },
+    {
       icon: TrendingUp,
       title: "Active Projects",
       value: stats.activeProjects,
       subtitle: "Projects in progress",
-      color: "bg-gray-800"
+      color: "bg-gray-600"
     },
     {
       icon: Package,
@@ -76,15 +108,15 @@ export const DashboardStats = () => {
     },
     {
       icon: Clock,
-      title: "Pending Quotes",
-      value: stats.pendingQuotes,
-      subtitle: "Awaiting response",
+      title: "Total Quotes",
+      value: stats.totalQuotes,
+      subtitle: "All time quotes",
       color: "bg-gray-600"
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {statsData.map((stat, index) => (
         <div key={index} className="bg-gray-800 border border-gray-700 rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between">

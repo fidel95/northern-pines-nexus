@@ -30,6 +30,57 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_events: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_time: string
+          id: string
+          lead_id: string | null
+          salesperson_id: string | null
+          start_time: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_time: string
+          id?: string
+          lead_id?: string | null
+          salesperson_id?: string | null
+          start_time: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_time?: string
+          id?: string
+          lead_id?: string | null
+          salesperson_id?: string | null
+          start_time?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_salesperson_id_fkey"
+            columns: ["salesperson_id"]
+            isOneToOne: false
+            referencedRelation: "salespeople"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory: {
         Row: {
           category: string
@@ -77,6 +128,7 @@ export type Database = {
           message: string
           name: string
           phone: string | null
+          salesperson_id: string | null
           service: string | null
           status: string
           updated_at: string
@@ -88,6 +140,7 @@ export type Database = {
           message: string
           name: string
           phone?: string | null
+          salesperson_id?: string | null
           service?: string | null
           status?: string
           updated_at?: string
@@ -99,11 +152,20 @@ export type Database = {
           message?: string
           name?: string
           phone?: string | null
+          salesperson_id?: string | null
           service?: string | null
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leads_salesperson_id_fkey"
+            columns: ["salesperson_id"]
+            isOneToOne: false
+            referencedRelation: "salespeople"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -120,6 +182,92 @@ export type Database = {
           created_at?: string
           id?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      quotes: {
+        Row: {
+          client_name: string
+          created_at: string
+          estimated_amount: number
+          id: string
+          lead_id: string | null
+          notes: string | null
+          service_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_name: string
+          created_at?: string
+          estimated_amount: number
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          service_type: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string
+          created_at?: string
+          estimated_amount?: number
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          service_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      salespeople: {
+        Row: {
+          active: boolean
+          commission_percentage: number
+          created_at: string
+          email: string
+          id: string
+          job_types: string[] | null
+          name: string
+          phone: string | null
+          total_profit: number
+          total_sales: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          commission_percentage?: number
+          created_at?: string
+          email: string
+          id?: string
+          job_types?: string[] | null
+          name: string
+          phone?: string | null
+          total_profit?: number
+          total_sales?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          commission_percentage?: number
+          created_at?: string
+          email?: string
+          id?: string
+          job_types?: string[] | null
+          name?: string
+          phone?: string | null
+          total_profit?: number
+          total_sales?: number
+          updated_at?: string
         }
         Relationships: []
       }
