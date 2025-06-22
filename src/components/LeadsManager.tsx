@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Plus, Search, Filter, Eye, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -298,7 +297,7 @@ export const LeadsManager = () => {
                         <SelectValue placeholder="Select salesperson" />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-700 border-gray-600">
-                        <SelectItem value="" className="text-white">No assignment</SelectItem>
+                        <SelectItem value="none" className="text-white">No assignment</SelectItem>
                         {salespeople.map((salesperson) => (
                           <SelectItem key={salesperson.id} value={salesperson.id} className="text-white">
                             {salesperson.name}
@@ -400,7 +399,7 @@ export const LeadsManager = () => {
                         <SelectValue placeholder="Assign" />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-700 border-gray-600">
-                        <SelectItem value="" className="text-white">Unassign</SelectItem>
+                        <SelectItem value="none" className="text-white">Unassign</SelectItem>
                         {salespeople.map((salesperson) => (
                           <SelectItem key={salesperson.id} value={salesperson.id} className="text-white">
                             {salesperson.name}

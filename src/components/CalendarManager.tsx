@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Plus, Calendar as CalendarIcon, Edit, Trash2, User, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -351,7 +350,7 @@ export const CalendarManager = () => {
                           <SelectValue placeholder="Select salesperson" />
                         </SelectTrigger>
                         <SelectContent className="bg-gray-700 border-gray-600">
-                          <SelectItem value="" className="text-white">No salesperson</SelectItem>
+                          <SelectItem value="none" className="text-white">No salesperson</SelectItem>
                           {salespeople.map((salesperson) => (
                             <SelectItem key={salesperson.id} value={salesperson.id} className="text-white">
                               {salesperson.name}
@@ -367,7 +366,7 @@ export const CalendarManager = () => {
                           <SelectValue placeholder="Select lead" />
                         </SelectTrigger>
                         <SelectContent className="bg-gray-700 border-gray-600">
-                          <SelectItem value="" className="text-white">No lead</SelectItem>
+                          <SelectItem value="none" className="text-white">No lead</SelectItem>
                           {leads.map((lead) => (
                             <SelectItem key={lead.id} value={lead.id} className="text-white">
                               {lead.name}
