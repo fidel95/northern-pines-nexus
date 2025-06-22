@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Plus, MapPin, Calendar, Filter, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -93,6 +92,38 @@ export const CanvassingActivitiesManager = () => {
     });
   };
 
+  const updateCanvasserStats = async (canvasserId: string) => {
+    try {
+      // Get total visits for this canvasser
+      const { data: activities, error: activitiesError } = await supabase
+        .from('canvassing_activities')
+        .select('result')
+        .eq('canvasser_id', canvasserId);
+
+      if (activitiesError) throw activitiesError;
+
+      const totalVisits = activities?.length || 0;
+      const leadsGenerated = activities?.filter(activity => 
+        activity.result === 'Interested' || activity.result === 'Call Back'
+      ).length || 0;
+      const conversionRate = totalVisits > 0 ? (leadsGenerated / totalVisits) * 100 : 0;
+
+      // Update canvasser stats
+      const { error: updateError } = await supabase
+        .from('canvassers')
+        .update({
+          total_visits: totalVisits,
+          leads_generated: leadsGenerated,
+          conversion_rate: conversionRate
+        })
+        .eq('id', canvasserId);
+
+      if (updateError) throw updateError;
+    } catch (error) {
+      console.error('Error updating canvasser stats:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -124,12 +155,7 @@ export const CanvassingActivitiesManager = () => {
       if (error) throw error;
 
       // Update canvasser stats
-      await supabase.rpc('update_canvasser_stats', { 
-        canvasser_id: formData.canvasser_id 
-      }).catch(() => {
-        // If RPC doesn't exist, manually update
-        console.log('Updating canvasser stats manually');
-      });
+      await updateCanvasserStats(formData.canvasser_id);
 
       await fetchData();
       resetForm();
