@@ -81,6 +81,149 @@ export type Database = {
           },
         ]
       }
+      canvassers: {
+        Row: {
+          active: boolean
+          assigned_territories: string[] | null
+          conversion_rate: number
+          created_at: string
+          email: string
+          hire_date: string
+          id: string
+          leads_generated: number
+          name: string
+          phone: string | null
+          total_visits: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          assigned_territories?: string[] | null
+          conversion_rate?: number
+          created_at?: string
+          email: string
+          hire_date?: string
+          id?: string
+          leads_generated?: number
+          name: string
+          phone?: string | null
+          total_visits?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          assigned_territories?: string[] | null
+          conversion_rate?: number
+          created_at?: string
+          email?: string
+          hire_date?: string
+          id?: string
+          leads_generated?: number
+          name?: string
+          phone?: string | null
+          total_visits?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      canvassing_activities: {
+        Row: {
+          address: string
+          canvasser_id: string
+          created_at: string
+          followup_priority: number | null
+          id: string
+          notes: string | null
+          requires_followup: boolean | null
+          result: string
+          visit_date: string
+          zip_code: string | null
+        }
+        Insert: {
+          address: string
+          canvasser_id: string
+          created_at?: string
+          followup_priority?: number | null
+          id?: string
+          notes?: string | null
+          requires_followup?: boolean | null
+          result: string
+          visit_date?: string
+          zip_code?: string | null
+        }
+        Update: {
+          address?: string
+          canvasser_id?: string
+          created_at?: string
+          followup_priority?: number | null
+          id?: string
+          notes?: string | null
+          requires_followup?: boolean | null
+          result?: string
+          visit_date?: string
+          zip_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canvassing_activities_canvasser_id_fkey"
+            columns: ["canvasser_id"]
+            isOneToOne: false
+            referencedRelation: "canvassers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_size: number | null
+          file_type: string
+          file_url: string
+          filename: string
+          id: string
+          lead_id: string
+          salesperson_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_size?: number | null
+          file_type: string
+          file_url: string
+          filename: string
+          id?: string
+          lead_id: string
+          salesperson_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_size?: number | null
+          file_type?: string
+          file_url?: string
+          filename?: string
+          id?: string
+          lead_id?: string
+          salesperson_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_salesperson_id_fkey"
+            columns: ["salesperson_id"]
+            isOneToOne: false
+            referencedRelation: "salespeople"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory: {
         Row: {
           category: string
@@ -122,6 +265,7 @@ export type Database = {
       }
       leads: {
         Row: {
+          canvasser_id: string | null
           created_at: string
           email: string
           id: string
@@ -134,6 +278,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          canvasser_id?: string | null
           created_at?: string
           email: string
           id?: string
@@ -146,6 +291,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          canvasser_id?: string | null
           created_at?: string
           email?: string
           id?: string
@@ -159,10 +305,58 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "leads_canvasser_id_fkey"
+            columns: ["canvasser_id"]
+            isOneToOne: false
+            referencedRelation: "canvassers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "leads_salesperson_id_fkey"
             columns: ["salesperson_id"]
             isOneToOne: false
             referencedRelation: "salespeople"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          read: boolean | null
+          related_lead_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean | null
+          related_lead_id?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean | null
+          related_lead_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_related_lead_id_fkey"
+            columns: ["related_lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
         ]
@@ -270,6 +464,60 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      tasks: {
+        Row: {
+          completed: boolean | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          lead_id: string | null
+          priority: number | null
+          salesperson_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          lead_id?: string | null
+          priority?: number | null
+          salesperson_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          lead_id?: string | null
+          priority?: number | null
+          salesperson_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_salesperson_id_fkey"
+            columns: ["salesperson_id"]
+            isOneToOne: false
+            referencedRelation: "salespeople"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
