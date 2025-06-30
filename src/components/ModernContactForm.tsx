@@ -1,19 +1,15 @@
 
 import { useState } from 'react';
-import { Send, Phone, Mail, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { InlineEditor } from './InlineEditor';
-import { SimpleCaptcha } from './SimpleCaptcha';
-import { useHomepageContent } from '@/hooks/useHomepageContent';
-import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Mail, Phone, MessageSquare, Send } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { SimpleCaptcha } from './SimpleCaptcha';
 
 export const ModernContactForm = () => {
-  const { content, updateContent } = useHomepageContent();
-  const contactContent = content.contact || {};
-  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -21,15 +17,15 @@ export const ModernContactForm = () => {
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [captchaValid, setCaptchaValid] = useState(false);
+  const [isCaptchaValid, setIsCaptchaValid] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!captchaValid) {
+    if (!isCaptchaValid) {
       toast({
         title: "Verification Required",
-        description: "Please complete the security question correctly.",
+        description: "Please complete the security question to submit the form.",
         variant: "destructive"
       });
       return;
@@ -40,23 +36,24 @@ export const ModernContactForm = () => {
     try {
       const { error } = await supabase
         .from('form_submissions')
-        .insert({
+        .insert([{
           name: formData.name,
           email: formData.email,
-          phone: formData.phone,
+          phone: formData.phone || null,
           message: formData.message,
-          source: 'homepage'
-        });
+          source: 'homepage',
+          status: 'new'
+        }]);
 
       if (error) throw error;
 
       toast({
         title: "Message Sent!",
-        description: "We'll get back to you within 24 hours.",
+        description: "Thank you for contacting us. We'll get back to you soon.",
       });
 
       setFormData({ name: '', email: '', phone: '', message: '' });
-      setCaptchaValid(false);
+      setIsCaptchaValid(false);
     } catch (error) {
       console.error('Error submitting form:', error);
       toast({
@@ -69,149 +66,107 @@ export const ModernContactForm = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
   return (
-    <section className="py-20 bg-gradient-to-br from-gray-900 to-black text-white">
+    <section className="py-20 bg-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <InlineEditor
-            content={contactContent.title || 'Ready to Start Your Project?'}
-            onSave={(content) => updateContent('contact', 'title', content)}
-            className="text-4xl md:text-5xl font-bold mb-6"
-          />
-          <InlineEditor
-            content={contactContent.description || 'Get in touch with our team for a free consultation and quote.'}
-            onSave={(content) => updateContent('contact', 'description', content)}
-            className="text-xl text-gray-300 max-w-3xl mx-auto"
-          />
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Get In Touch</h2>
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            Ready to start your construction project? Contact us today for a free consultation and quote.
+          </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-16">
-          {/* Contact Info */}
-          <div className="space-y-8">
-            <div className="bg-blue-900 bg-opacity-50 rounded-xl p-8 backdrop-blur-sm">
-              <h3 className="text-2xl font-bold mb-8">Get In Touch</h3>
-              
-              <div className="space-y-6">
-                <div className="flex items-center space-x-4">
-                  <div className="bg-blue-600 rounded-full p-3">
-                    <Phone className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold">Phone</h4>
-                    <p className="text-gray-300">(555) 123-4567</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-4">
-                  <div className="bg-blue-600 rounded-full p-3">
-                    <Mail className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold">Email</h4>
-                    <p className="text-gray-300">info@northernpines.com</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-4">
-                  <div className="bg-blue-600 rounded-full p-3">
-                    <MapPin className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold">Office</h4>
-                    <p className="text-gray-300">123 Pine Street<br />Northern Valley, NH 03304</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Contact Form */}
-          <div className="bg-white rounded-xl p-8 shadow-2xl">
+        <Card className="max-w-2xl mx-auto bg-gray-900 border-blue-800 shadow-2xl">
+          <CardHeader>
+            <CardTitle className="text-2xl text-white text-center">Send Us a Message</CardTitle>
+          </CardHeader>
+          <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-2">
+                  <label htmlFor="name" className="text-gray-300 font-medium flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4" />
                     Full Name *
                   </label>
                   <Input
-                    type="text"
                     id="name"
-                    name="name"
-                    required
+                    type="text"
                     value={formData.name}
-                    onChange={handleChange}
-                    className="w-full"
-                    placeholder="Your full name"
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    placeholder="Enter your full name"
+                    className="bg-gray-800 border-blue-700 text-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-500"
+                    required
                   />
                 </div>
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="space-y-2">
+                  <label htmlFor="email" className="text-gray-300 font-medium flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
                     Email Address *
                   </label>
                   <Input
-                    type="email"
                     id="email"
-                    name="email"
-                    required
+                    type="email"
                     value={formData.email}
-                    onChange={handleChange}
-                    className="w-full"
-                    placeholder="your@email.com"
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    placeholder="Enter your email"
+                    className="bg-gray-800 border-blue-700 text-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-500"
+                    required
                   />
                 </div>
               </div>
               
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="space-y-2">
+                <label htmlFor="phone" className="text-gray-300 font-medium flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
                   Phone Number
                 </label>
                 <Input
-                  type="tel"
                   id="phone"
-                  name="phone"
+                  type="tel"
                   value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full"
-                  placeholder="(555) 123-4567"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                  Project Details *
-                </label>
-                <Textarea
-                  id="message"
-                  name="message"
-                  rows={6}
-                  required
-                  value={formData.message}
-                  onChange={handleChange}
-                  className="w-full"
-                  placeholder="Tell us about your project..."
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  placeholder="Enter your phone number"
+                  className="bg-gray-800 border-blue-700 text-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
 
-              <SimpleCaptcha onVerify={setCaptchaValid} />
-              
-              <Button
-                type="submit"
-                disabled={isSubmitting || !captchaValid}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-lg shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              <div className="space-y-2">
+                <label htmlFor="message" className="text-gray-300 font-medium">
+                  Message *
+                </label>
+                <Textarea
+                  id="message"
+                  value={formData.message}
+                  onChange={(e) => setFormData({...formData, message: e.target.value})}
+                  placeholder="Tell us about your project..."
+                  rows={5}
+                  className="bg-gray-800 border-blue-700 text-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-500"
+                  required
+                />
+              </div>
+
+              <SimpleCaptcha onVerify={setIsCaptchaValid} className="mb-6" />
+
+              <Button 
+                type="submit" 
+                disabled={isSubmitting || !isCaptchaValid}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:transform-none"
               >
-                <Send className="w-5 h-5 mr-2" />
-                {isSubmitting ? 'Sending...' : 'Send Message'}
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5 mr-2" />
+                    Send Message
+                  </>
+                )}
               </Button>
             </form>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </section>
   );
