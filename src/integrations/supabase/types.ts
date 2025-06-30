@@ -224,6 +224,81 @@ export type Database = {
           },
         ]
       }
+      form_submissions: {
+        Row: {
+          email: string
+          id: string
+          ip_address: unknown | null
+          message: string
+          name: string
+          phone: string | null
+          responded_at: string | null
+          responded_by: string | null
+          source: string | null
+          status: string | null
+          submitted_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          email: string
+          id?: string
+          ip_address?: unknown | null
+          message: string
+          name: string
+          phone?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          source?: string | null
+          status?: string | null
+          submitted_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          email?: string
+          id?: string
+          ip_address?: unknown | null
+          message?: string
+          name?: string
+          phone?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          source?: string | null
+          status?: string | null
+          submitted_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      homepage_content: {
+        Row: {
+          content: string
+          content_type: string
+          field_name: string
+          id: string
+          section: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          content: string
+          content_type?: string
+          field_name: string
+          id?: string
+          section: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          content?: string
+          content_type?: string
+          field_name?: string
+          id?: string
+          section?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       inventory: {
         Row: {
           category: string

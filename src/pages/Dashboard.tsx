@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import { Navigation } from "@/components/Navigation";
 import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { FormSubmissionsManager } from "@/components/FormSubmissionsManager";
 
 const Dashboard = () => {
   const { user, signOut, isAdmin, isLoading } = useAuth();
@@ -79,8 +79,9 @@ const Dashboard = () => {
         <DashboardStats />
         
         <Tabs defaultValue="leads" className="mt-8">
-          <TabsList className="grid w-full grid-cols-8 bg-gray-900 border-blue-800 shadow-lg">
+          <TabsList className="grid w-full grid-cols-9 bg-gray-900 border-blue-800 shadow-lg">
             <TabsTrigger value="leads" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Leads</TabsTrigger>
+            <TabsTrigger value="submissions" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Submissions</TabsTrigger>
             <TabsTrigger value="quotes" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Quotes</TabsTrigger>
             <TabsTrigger value="salespeople" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Salespeople</TabsTrigger>
             <TabsTrigger value="calendar" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Calendar</TabsTrigger>
@@ -92,6 +93,10 @@ const Dashboard = () => {
           
           <TabsContent value="leads">
             <LeadsManager />
+          </TabsContent>
+          
+          <TabsContent value="submissions">
+            <FormSubmissionsManager />
           </TabsContent>
           
           <TabsContent value="quotes">

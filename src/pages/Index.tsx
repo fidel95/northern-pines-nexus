@@ -1,10 +1,11 @@
 
 import { useState, useEffect } from "react";
-import { Hero } from "@/components/Hero";
+import { ModernHero } from "@/components/ModernHero";
+import { ModernServices } from "@/components/ModernServices";
+import { ModernTestimonials } from "@/components/ModernTestimonials";
+import { ModernContactForm } from "@/components/ModernContactForm";
 import { About } from "@/components/About";
-import { Services } from "@/components/Services";
 import { Projects } from "@/components/Projects";
-import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
 import { Navigation } from "@/components/Navigation";
 import { ContentEditor } from "@/components/ContentEditor";
@@ -96,7 +97,7 @@ const Index = () => {
           <Button
             onClick={() => setIsEditMode(!isEditMode)}
             variant="outline"
-            className="bg-white/90 backdrop-blur-sm hover:bg-white"
+            className="bg-white/90 backdrop-blur-sm hover:bg-white shadow-lg"
           >
             {isEditMode ? <Eye className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
             {isEditMode ? 'Preview' : 'Edit Page'}
@@ -114,17 +115,24 @@ const Index = () => {
         </div>
       )}
 
-      {/* Custom Sections */}
-      {customSections.map(renderCustomSection)}
-
-      {/* Default Sections (only show if no custom sections or not in edit mode) */}
-      {(!isEditMode || customSections.length === 0) && (
+      {/* Modern Homepage Sections */}
+      {!isEditMode && (
         <>
-          <Hero />
+          <ModernHero />
+          <ModernServices />
+          <ModernTestimonials />
+          <ModernContactForm />
+        </>
+      )}
+
+      {/* Custom Sections - Only when in edit mode */}
+      {isEditMode && customSections.map(renderCustomSection)}
+
+      {/* Legacy Sections - Only show when in edit mode and no custom sections */}
+      {isEditMode && customSections.length === 0 && (
+        <>
           <About />
-          <Services />
           <Projects />
-          <Contact />
         </>
       )}
 
