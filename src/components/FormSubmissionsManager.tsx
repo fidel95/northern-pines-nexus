@@ -1,11 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { Mail, Phone, Calendar, Eye, CheckCircle, Archive } from "lucide-react";
+import { Mail, Phone, Calendar, Eye, CheckCircle, Archive, Download, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -23,8 +25,11 @@ interface FormSubmission {
 
 export const FormSubmissionsManager = () => {
   const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
+  const [filteredSubmissions, setFilteredSubmissions] = useState<FormSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSubmission, setSelectedSubmission] = useState<FormSubmission | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const fetchSubmissions = async () => {
     try {
@@ -35,6 +40,7 @@ export const FormSubmissionsManager = () => {
 
       if (error) throw error;
       setSubmissions(data || []);
+      setFilteredSubmissions(data || []);
     } catch (error) {
       console.error('Error fetching submissions:', error);
       toast({
@@ -76,9 +82,59 @@ export const FormSubmissionsManager = () => {
     }
   };
 
+  const exportToCSV = () => {
+    const csvData = filteredSubmissions.map(submission => ({
+      Name: submission.name,
+      Email: submission.email,
+      Phone: submission.phone || '',
+      Message: submission.message.replace(/"/g, '""'),
+      Source: submission.source,
+      Status: submission.status,
+      'Submitted At': formatDate(submission.submitted_at),
+      'Responded At': submission.responded_at ? formatDate(submission.responded_at) : ''
+    }));
+
+    const headers = Object.keys(csvData[0] || {});
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => 
+        headers.map(header => `"${row[header as keyof typeof row]}"`).join(',')
+      )
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `form-submissions-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+
+    toast({
+      title: "Export Complete",
+      description: "Form submissions exported successfully",
+    });
+  };
+
   useEffect(() => {
     fetchSubmissions();
   }, []);
+
+  useEffect(() => {
+    let filtered = submissions;
+
+    if (searchTerm) {
+      filtered = filtered.filter(submission =>
+        submission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        submission.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        submission.message.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(submission => submission.status === statusFilter);
+    }
+
+    setFilteredSubmissions(filtered);
+  }, [submissions, searchTerm, statusFilter]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -112,15 +168,49 @@ export const FormSubmissionsManager = () => {
   return (
     <Card className="bg-gray-800 border-gray-700">
       <CardHeader>
-        <CardTitle className="text-white flex items-center gap-2">
-          <Mail className="w-5 h-5" />
-          Form Submissions ({submissions.length})
-        </CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-white flex items-center gap-2">
+            <Mail className="w-5 h-5" />
+            Form Submissions ({filteredSubmissions.length})
+          </CardTitle>
+          <Button
+            onClick={exportToCSV}
+            className="bg-green-600 hover:bg-green-700"
+            disabled={filteredSubmissions.length === 0}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export CSV
+          </Button>
+        </div>
+        
+        <div className="flex gap-4 mt-4">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="Search submissions..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-gray-700 border-gray-600 text-white"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48 bg-gray-700 border-gray-600 text-white">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-700 border-gray-600">
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="new">New</SelectItem>
+              <SelectItem value="responded">Responded</SelectItem>
+              <SelectItem value="archived">Archived</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
       <CardContent>
-        {submissions.length === 0 ? (
+        {filteredSubmissions.length === 0 ? (
           <div className="text-center py-8 text-gray-400">
-            No form submissions yet.
+            {searchTerm || statusFilter !== 'all' ? 'No submissions match your filters.' : 'No form submissions yet.'}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -137,7 +227,7 @@ export const FormSubmissionsManager = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {submissions.map((submission) => (
+                {filteredSubmissions.map((submission) => (
                   <TableRow key={submission.id} className="border-gray-600">
                     <TableCell className="text-white font-medium">
                       {submission.name}

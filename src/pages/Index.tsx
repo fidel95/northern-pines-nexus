@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { ModernHero } from "@/components/ModernHero";
 import { ModernServices } from "@/components/ModernServices";
 import { ModernTestimonials } from "@/components/ModernTestimonials";
+import { ModernGallery } from "@/components/ModernGallery";
 import { ModernContactForm } from "@/components/ModernContactForm";
 import { About } from "@/components/About";
 import { Projects } from "@/components/Projects";
@@ -120,6 +121,7 @@ const Index = () => {
         <>
           <ModernHero />
           <ModernServices />
+          <ModernGallery />
           <ModernTestimonials />
           <ModernContactForm />
         </>
