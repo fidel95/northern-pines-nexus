@@ -43,42 +43,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Auto-logout after 24 hours of inactivity
-  const setupAutoLogout = () => {
-    const timeout = 24 * 60 * 60 * 1000; // 24 hours
-    const timeoutId = setTimeout(async () => {
-      console.log('Auto-logout due to inactivity');
-      await signOut();
-    }, timeout);
-
-    return () => clearTimeout(timeoutId);
-  };
-
   useEffect(() => {
     let mounted = true;
-    let cleanupAutoLogout: (() => void) | null = null;
 
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
 
         console.log('Auth state changed:', event, session?.user?.email);
         
-        // Clear previous auto-logout
-        if (cleanupAutoLogout) {
-          cleanupAutoLogout();
-          cleanupAutoLogout = null;
-        }
-        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Set up auto-logout for active sessions
-          cleanupAutoLogout = setupAutoLogout();
-          
-          // Check admin status with better error handling
           try {
             const adminStatus = await checkAdminStatus(session.user.id);
             if (mounted) {
@@ -101,7 +78,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // THEN check for existing session
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -116,7 +92,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (mounted && session?.user) {
           setSession(session);
           setUser(session.user);
-          cleanupAutoLogout = setupAutoLogout();
           
           try {
             const adminStatus = await checkAdminStatus(session.user.id);
@@ -146,15 +121,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       mounted = false;
-      if (cleanupAutoLogout) {
-        cleanupAutoLogout();
-      }
       subscription.unsubscribe();
     };
   }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
+      setIsLoading(true);
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -163,22 +136,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Sign in error:', error);
       return { error };
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
+      setIsLoading(true);
       await supabase.auth.signOut();
-      // Clear local state immediately
       setUser(null);
       setSession(null);
       setIsAdmin(false);
     } catch (error) {
       console.error('Sign out error:', error);
-      // Still clear local state even if logout fails
       setUser(null);
       setSession(null);
       setIsAdmin(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 

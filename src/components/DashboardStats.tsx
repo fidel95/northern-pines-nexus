@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Users, Package, TrendingUp, Clock, FileText, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 export const DashboardStats = () => {
   const [stats, setStats] = useState({
@@ -25,7 +26,6 @@ export const DashboardStats = () => {
         setLoading(true);
         setError(null);
 
-        // Fetch all data with error handling for each query
         const queries = await Promise.allSettled([
           supabase.from('leads').select('status'),
           supabase.from('inventory').select('quantity, min_stock'),
@@ -39,7 +39,6 @@ export const DashboardStats = () => {
 
         let newStats = { ...stats };
 
-        // Process leads data
         if (leadsResult.status === 'fulfilled' && leadsResult.value.data) {
           const leads = leadsResult.value.data;
           newStats.totalLeads = leads.length;
@@ -47,31 +46,26 @@ export const DashboardStats = () => {
           newStats.activeProjects = leads.filter(lead => lead.status === 'In Progress').length;
         }
 
-        // Process inventory data
         if (inventoryResult.status === 'fulfilled' && inventoryResult.value.data) {
           const inventory = inventoryResult.value.data;
           newStats.totalItems = inventory.length;
           newStats.lowStockItems = inventory.filter(item => item.quantity <= item.min_stock).length;
         }
 
-        // Process quotes data
         if (quotesResult.status === 'fulfilled' && quotesResult.value.data) {
           const quotes = quotesResult.value.data;
           newStats.totalQuotes = quotes.length;
           newStats.pendingQuotes = quotes.filter(quote => quote.status === 'pending').length;
         }
 
-        // Process salespeople data
         if (salespeopleResult.status === 'fulfilled' && salespeopleResult.value.data) {
           newStats.totalSalespeople = salespeopleResult.value.data.length;
         }
 
-        // Process canvassers data
         if (canvassersResult.status === 'fulfilled' && canvassersResult.value.data) {
           newStats.totalCanvassers = canvassersResult.value.data.length;
         }
 
-        // Process tasks data
         if (tasksResult.status === 'fulfilled' && tasksResult.value.data) {
           const tasks = tasksResult.value.data;
           newStats.activeTasks = tasks.filter(task => !task.completed).length;
@@ -81,12 +75,21 @@ export const DashboardStats = () => {
       } catch (error) {
         console.error('Error fetching stats:', error);
         setError('Failed to load dashboard statistics');
+        toast({
+          title: "Error Loading Stats",
+          description: "Failed to load dashboard statistics. Please refresh the page.",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchStats();
+
+    // Refresh stats every 30 seconds
+    const interval = setInterval(fetchStats, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const statsData = [
@@ -171,6 +174,12 @@ export const DashboardStats = () => {
     return (
       <div className="bg-red-900 border border-red-600 rounded-lg p-6 text-center">
         <p className="text-red-200">{error}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+        >
+          Retry
+        </button>
       </div>
     );
   }

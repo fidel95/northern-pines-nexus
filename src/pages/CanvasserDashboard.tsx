@@ -1,18 +1,20 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Clock, Calendar, MapPin } from "lucide-react";
+import { LogOut, User, Clock, Calendar, MapPin, RefreshCw } from "lucide-react";
 import { useCanvasserAuth } from "@/contexts/CanvasserAuthContext";
 import { TimeTracker } from "@/components/canvasser/TimeTracker";
 import { DailySchedule } from "@/components/canvasser/DailySchedule";
 import { ActivityLogger } from "@/components/canvasser/ActivityLogger";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "@/hooks/use-toast";
 
 const CanvasserDashboard = () => {
   const { canvasser, signOut, isLoading } = useCanvasserAuth();
   const navigate = useNavigate();
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !canvasser) {
@@ -20,10 +22,47 @@ const CanvasserDashboard = () => {
     }
   }, [canvasser, isLoading, navigate]);
 
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      navigate('/canvasser-auth');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Logout Error",
+        description: "There was an error logging out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      window.location.reload();
+    } catch (error) {
+      console.error('Refresh error:', error);
+      toast({
+        title: "Refresh Error",
+        description: "There was an error refreshing the dashboard.",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-xl text-white">Loading dashboard...</div>
+        <div className="text-center">
+          <div className="text-xl text-white mb-4">Loading dashboard...</div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        </div>
       </div>
     );
   }
@@ -45,16 +84,6 @@ const CanvasserDashboard = () => {
     );
   }
 
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      navigate('/canvasser-auth');
-    } catch (error) {
-      console.error('Logout error:', error);
-      navigate('/canvasser-auth');
-    }
-  };
-
   return (
     <div className="min-h-screen bg-black">
       <div className="bg-gray-900 border-b border-blue-800 p-4">
@@ -68,19 +97,29 @@ const CanvasserDashboard = () => {
               <p className="text-gray-400 text-sm">{canvasser.email}</p>
             </div>
           </div>
-          <Button 
-            onClick={handleLogout}
-            variant="outline"
-            className="flex items-center gap-2 border-blue-600 text-blue-400 hover:bg-blue-900"
-          >
-            <LogOut className="w-4 h-4" />
-            Logout
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleRefresh}
+              variant="outline"
+              className="flex items-center gap-2 border-gray-600 text-gray-400 hover:bg-gray-800"
+              disabled={refreshing}
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button 
+              onClick={handleLogout}
+              variant="outline"
+              className="flex items-center gap-2 border-blue-600 text-blue-400 hover:bg-blue-900"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </Button>
+          </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Card */}
         <Card className="bg-gray-900 border-blue-800 mb-8">
           <CardContent className="p-6">
             <h2 className="text-2xl font-bold text-white mb-4">Welcome to Your Dashboard</h2>

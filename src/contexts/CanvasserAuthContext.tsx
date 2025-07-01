@@ -39,7 +39,6 @@ export const CanvasserAuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     let mounted = true;
 
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
@@ -72,7 +71,6 @@ export const CanvasserAuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     );
 
-    // THEN check for existing session
     const checkSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -105,6 +103,7 @@ export const CanvasserAuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const signIn = async (email: string, password: string) => {
     try {
+      setIsLoading(true);
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -113,17 +112,21 @@ export const CanvasserAuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error) {
       console.error('Canvasser sign in error:', error);
       return { error };
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
+      setIsLoading(true);
       await supabase.auth.signOut();
       setCanvasser(null);
     } catch (error) {
       console.error('Canvasser sign out error:', error);
-      // Still clear local state
       setCanvasser(null);
+    } finally {
+      setIsLoading(false);
     }
   };
 

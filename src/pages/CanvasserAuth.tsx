@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useCanvasserAuth } from "@/contexts/CanvasserAuthContext";
 import { toast } from "@/hooks/use-toast";
-import { MapPin, Mail, Lock } from "lucide-react";
+import { MapPin, Mail, Lock, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const CanvasserAuth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{email?: string, password?: string}>({});
   const { signIn, canvasser, isLoading } = useCanvasserAuth();
   const navigate = useNavigate();
 
@@ -22,24 +23,51 @@ const CanvasserAuth = () => {
     }
   }, [canvasser, isLoading, navigate]);
 
+  const validateForm = () => {
+    const newErrors: {email?: string, password?: string} = {};
+    
+    if (!email) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+    
+    if (!password) {
+      newErrors.password = "Password is required";
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-xl text-white">Loading...</div>
+        <div className="text-center">
+          <div className="text-xl text-white mb-4">Loading...</div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        </div>
       </div>
     );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
+    setErrors({});
 
     try {
       const { error } = await signIn(email, password);
       if (error) {
         let errorMessage = error.message;
         
-        // Provide user-friendly error messages
         if (error.message.includes('Invalid login credentials')) {
           errorMessage = 'Invalid email or password. Please check your credentials and try again.';
         } else if (error.message.includes('Email not confirmed')) {
@@ -58,7 +86,6 @@ const CanvasserAuth = () => {
           title: "Login Successful",
           description: "Welcome back! Loading your dashboard...",
         });
-        // Navigation will happen via useEffect when canvasser state updates
       }
     } catch (error) {
       console.error('Canvasser login error:', error);
@@ -92,13 +119,23 @@ const CanvasserAuth = () => {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) setErrors({...errors, email: undefined});
+                  }}
                   placeholder="Enter your email"
-                  className="pl-10 bg-gray-800 border-blue-700 text-white placeholder-gray-400"
-                  required
+                  className={`pl-10 bg-gray-800 border-blue-700 text-white placeholder-gray-400 ${
+                    errors.email ? 'border-red-500' : ''
+                  }`}
                   disabled={loading}
                 />
               </div>
+              {errors.email && (
+                <div className="flex items-center mt-1 text-red-400 text-sm">
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  {errors.email}
+                </div>
+              )}
             </div>
             <div>
               <Label htmlFor="password" className="text-gray-300">Password</Label>
@@ -108,13 +145,23 @@ const CanvasserAuth = () => {
                   id="password"
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errors.password) setErrors({...errors, password: undefined});
+                  }}
                   placeholder="Enter your password"
-                  className="pl-10 bg-gray-800 border-blue-700 text-white placeholder-gray-400"
-                  required
+                  className={`pl-10 bg-gray-800 border-blue-700 text-white placeholder-gray-400 ${
+                    errors.password ? 'border-red-500' : ''
+                  }`}
                   disabled={loading}
                 />
               </div>
+              {errors.password && (
+                <div className="flex items-center mt-1 text-red-400 text-sm">
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  {errors.password}
+                </div>
+              )}
             </div>
             <Button 
               type="submit" 
