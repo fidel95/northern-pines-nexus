@@ -179,22 +179,12 @@ const Index = () => {
         </div>
       )}
 
-      {/* Modern Homepage Sections - Always show unless in edit mode with custom sections */}
-      {!isEditMode && (
-        <>
-          <ModernHero />
-          <ModernServices />
-          <ModernGallery />
-          <ModernTestimonials />
-          <ModernContactForm />
-        </>
-      )}
-
-      {/* Custom Sections - Only when in edit mode */}
-      {isEditMode && customSections.length > 0 && customSections.map(renderCustomSection)}
-
-      {/* Legacy Sections - Only show when in edit mode and no custom sections */}
-      {isEditMode && customSections.length === 0 && (
+      {/* Homepage Content */}
+      {isEditMode && customSections.length > 0 ? (
+        // Show custom sections in edit mode
+        customSections.map(renderCustomSection)
+      ) : isEditMode && customSections.length === 0 ? (
+        // Show message when no custom sections in edit mode
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mx-4 my-4">
           <div className="flex">
             <div className="ml-3">
@@ -204,6 +194,15 @@ const Index = () => {
             </div>
           </div>
         </div>
+      ) : (
+        // Show default homepage content
+        <>
+          <ModernHero />
+          <ModernServices />
+          <ModernGallery />
+          <ModernTestimonials />
+          <ModernContactForm />
+        </>
       )}
 
       <Footer />

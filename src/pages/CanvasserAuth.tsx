@@ -74,6 +74,8 @@ const CanvasserAuth = () => {
           errorMessage = 'Please check your email and confirm your account before signing in.';
         } else if (error.message.includes('Too many requests')) {
           errorMessage = 'Too many login attempts. Please wait a moment before trying again.';
+        } else if (error.message.includes('signup_disabled')) {
+          errorMessage = 'Account access is restricted. Please contact your administrator.';
         }
         
         toast({

@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Canvasser {
@@ -17,7 +18,7 @@ interface Canvasser {
 
 interface CanvasserAuthContextType {
   canvasser: Canvasser | null;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   isLoading: boolean;
 }
@@ -111,7 +112,7 @@ export const CanvasserAuthProvider: React.FC<{ children: React.ReactNode }> = ({
       return { error };
     } catch (error) {
       console.error('Canvasser sign in error:', error);
-      return { error };
+      return { error: error as AuthError };
     } finally {
       setIsLoading(false);
     }

@@ -51,7 +51,6 @@ const Dashboard = () => {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      // Trigger a page refresh to reload all data
       window.location.reload();
     } catch (error) {
       console.error('Refresh error:', error);
@@ -82,13 +81,23 @@ const Dashboard = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Please Sign In</h1>
           <p className="text-gray-400 mb-6">You need to be signed in to access the dashboard.</p>
-          <Button 
-            onClick={() => navigate('/auth')} 
-            className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
-          >
-            <LogIn className="w-4 h-4" />
-            Go to Sign In
-          </Button>
+          <div className="flex gap-4 justify-center">
+            <Button 
+              onClick={() => navigate('/auth')} 
+              className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+            >
+              <LogIn className="w-4 h-4" />
+              Sign In
+            </Button>
+            <Button 
+              onClick={handleLogout} 
+              variant="outline"
+              className="border-blue-600 text-blue-400 hover:bg-blue-900 flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -126,7 +135,7 @@ const Dashboard = () => {
     <div className="min-h-screen bg-black">
       <Navigation />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8 flex justify-between items-center">
+        <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">Admin Dashboard</h1>
             <p className="text-gray-400">Welcome back, {user.email}</p>
@@ -155,17 +164,17 @@ const Dashboard = () => {
         <DashboardStats />
         
         <Tabs defaultValue="leads" className="mt-8">
-          <TabsList className="grid w-full grid-cols-10 bg-gray-900 border-blue-800 shadow-lg">
-            <TabsTrigger value="leads" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Leads</TabsTrigger>
-            <TabsTrigger value="submissions" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Submissions</TabsTrigger>
-            <TabsTrigger value="quotes" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Quotes</TabsTrigger>
-            <TabsTrigger value="salespeople" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Salespeople</TabsTrigger>
-            <TabsTrigger value="calendar" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Calendar</TabsTrigger>
-            <TabsTrigger value="tasks" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Tasks</TabsTrigger>
-            <TabsTrigger value="canvassers" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Canvassers</TabsTrigger>
-            <TabsTrigger value="activities" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Activities</TabsTrigger>
-            <TabsTrigger value="inventory" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Inventory</TabsTrigger>
-            <TabsTrigger value="admins" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Admins</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 bg-gray-900 border-blue-800 shadow-lg overflow-x-auto">
+            <TabsTrigger value="leads" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200 text-xs sm:text-sm">Leads</TabsTrigger>
+            <TabsTrigger value="submissions" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200 text-xs sm:text-sm">Submissions</TabsTrigger>
+            <TabsTrigger value="quotes" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200 text-xs sm:text-sm">Quotes</TabsTrigger>
+            <TabsTrigger value="salespeople" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200 text-xs sm:text-sm">Sales</TabsTrigger>
+            <TabsTrigger value="calendar" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200 text-xs sm:text-sm">Calendar</TabsTrigger>
+            <TabsTrigger value="tasks" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200 text-xs sm:text-sm">Tasks</TabsTrigger>
+            <TabsTrigger value="canvassers" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200 text-xs sm:text-sm">Canvassers</TabsTrigger>
+            <TabsTrigger value="activities" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200 text-xs sm:text-sm">Activities</TabsTrigger>
+            <TabsTrigger value="inventory" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200 text-xs sm:text-sm">Inventory</TabsTrigger>
+            <TabsTrigger value="admins" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200 text-xs sm:text-sm">Admins</TabsTrigger>
           </TabsList>
           
           <TabsContent value="leads">

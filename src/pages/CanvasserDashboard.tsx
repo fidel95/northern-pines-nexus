@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Clock, Calendar, MapPin, RefreshCw } from "lucide-react";
+import { LogOut, User, Clock, Calendar, MapPin, RefreshCw, LogIn } from "lucide-react";
 import { useCanvasserAuth } from "@/contexts/CanvasserAuthContext";
 import { TimeTracker } from "@/components/canvasser/TimeTracker";
 import { DailySchedule } from "@/components/canvasser/DailySchedule";
@@ -73,12 +73,23 @@ const CanvasserDashboard = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
           <p className="text-gray-400 mb-6">Please sign in to access your canvasser dashboard.</p>
-          <Button 
-            onClick={() => navigate('/canvasser-auth')}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            Go to Login
-          </Button>
+          <div className="flex gap-4 justify-center">
+            <Button 
+              onClick={() => navigate('/canvasser-auth')}
+              className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+            >
+              <LogIn className="w-4 h-4" />
+              Sign In
+            </Button>
+            <Button 
+              onClick={handleLogout}
+              variant="outline"
+              className="border-blue-600 text-blue-400 hover:bg-blue-900 flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -87,7 +98,7 @@ const CanvasserDashboard = () => {
   return (
     <div className="min-h-screen bg-black">
       <div className="bg-gray-900 border-b border-blue-800 p-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
               <User className="w-6 h-6 text-white" />
@@ -144,24 +155,27 @@ const CanvasserDashboard = () => {
           <TabsList className="grid w-full grid-cols-3 bg-gray-900 border-blue-800">
             <TabsTrigger 
               value="time" 
-              className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+              className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"
             >
-              <Clock className="w-4 h-4 mr-2" />
-              Time Tracking
+              <Clock className="w-4 h-4" />
+              <span className="hidden sm:inline">Time Tracking</span>
+              <span className="sm:hidden">Time</span>
             </TabsTrigger>
             <TabsTrigger 
               value="schedule" 
-              className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+              className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"
             >
-              <Calendar className="w-4 h-4 mr-2" />
-              Daily Schedule
+              <Calendar className="w-4 h-4" />
+              <span className="hidden sm:inline">Daily Schedule</span>
+              <span className="sm:hidden">Schedule</span>
             </TabsTrigger>
             <TabsTrigger 
               value="activity" 
-              className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+              className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"
             >
-              <MapPin className="w-4 h-4 mr-2" />
-              Log Activity
+              <MapPin className="w-4 h-4" />
+              <span className="hidden sm:inline">Log Activity</span>
+              <span className="sm:hidden">Activity</span>
             </TabsTrigger>
           </TabsList>
 
