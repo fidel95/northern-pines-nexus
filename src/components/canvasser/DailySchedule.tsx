@@ -32,14 +32,15 @@ export const DailySchedule = () => {
     try {
       const today = new Date().toISOString().split('T')[0];
       const { data, error } = await supabase
-        .from('daily_schedules')
+        .from('daily_schedules' as any)
         .select('*')
         .eq('canvasser_id', canvasser.id)
         .eq('assigned_date', today)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setScheduleItems(data || []);
+      const scheduleData = (data || []) as ScheduleItem[];
+      setScheduleItems(scheduleData);
     } catch (error) {
       console.error('Error fetching schedule:', error);
     }
@@ -53,7 +54,7 @@ export const DailySchedule = () => {
     setLoading(true);
     try {
       const { error } = await supabase
-        .from('daily_schedules')
+        .from('daily_schedules' as any)
         .update({
           status,
           completion_time: new Date().toISOString(),

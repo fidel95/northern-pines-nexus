@@ -4,38 +4,40 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { MapPin, Plus, Flag } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { MapPin, Save } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCanvasserAuth } from "@/contexts/CanvasserAuthContext";
 
 export const ActivityLogger = () => {
   const { canvasser } = useCanvasserAuth();
-  const [formData, setFormData] = useState({
-    address: '',
-    zip_code: '',
-    result: '',
-    notes: '',
-    requires_followup: false,
-    followup_priority: 1
-  });
+  const [address, setAddress] = useState("");
+  const [zipCode, setZipCode] = useState("");
+  const [result, setResult] = useState("");
+  const [notes, setNotes] = useState("");
+  const [requiresFollowup, setRequiresFollowup] = useState(false);
+  const [followupPriority, setFollowupPriority] = useState("1");
   const [loading, setLoading] = useState(false);
 
   const resultOptions = [
-    { value: 'Not Interested', label: 'Not Interested', color: 'bg-red-600' },
-    { value: 'Maybe', label: 'Maybe', color: 'bg-yellow-600' },
-    { value: 'Call Back', label: 'Call Back', color: 'bg-blue-600' },
-    { value: 'Interested', label: 'Interested', color: 'bg-green-600' }
+    { value: "not_interested", label: "Not Interested" },
+    { value: "maybe", label: "Maybe Later" },
+    { value: "callback", label: "Call Back" },
+    { value: "interested", label: "Interested" },
+    { value: "no_answer", label: "No Answer" },
+    { value: "not_home", label: "Not Home" }
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canvasser || !formData.address || !formData.result) {
+    
+    if (!canvasser || !address.trim() || !result) {
       toast({
-        title: "Error",
-        description: "Address and result are required",
+        title: "Missing Information",
+        description: "Please fill in all required fields",
         variant: "destructive"
       });
       return;
@@ -44,32 +46,31 @@ export const ActivityLogger = () => {
     setLoading(true);
     try {
       const { error } = await supabase
-        .from('canvassing_activities')
+        .from('canvassing_activities' as any)
         .insert([{
           canvasser_id: canvasser.id,
-          address: formData.address,
-          zip_code: formData.zip_code || null,
-          result: formData.result,
-          notes: formData.notes || null,
-          requires_followup: formData.requires_followup,
-          followup_priority: formData.followup_priority
+          address: address.trim(),
+          zip_code: zipCode.trim() || null,
+          result,
+          notes: notes.trim() || null,
+          requires_followup: requiresFollowup,
+          followup_priority: requiresFollowup ? parseInt(followupPriority) : null,
+          visit_date: new Date().toISOString()
         }]);
 
       if (error) throw error;
 
       // Reset form
-      setFormData({
-        address: '',
-        zip_code: '',
-        result: '',
-        notes: '',
-        requires_followup: false,
-        followup_priority: 1
-      });
+      setAddress("");
+      setZipCode("");
+      setResult("");
+      setNotes("");
+      setRequiresFollowup(false);
+      setFollowupPriority("1");
 
       toast({
         title: "Activity Logged",
-        description: "Visit has been recorded successfully",
+        description: "Your visit has been recorded successfully",
       });
     } catch (error: any) {
       toast({
@@ -86,47 +87,45 @@ export const ActivityLogger = () => {
     <Card className="bg-gray-900 border-blue-800">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-white">
-          <Plus className="w-5 h-5 text-blue-400" />
-          Log New Visit
+          <MapPin className="w-5 h-5 text-blue-400" />
+          Log Visit Activity
         </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-gray-300 text-sm mb-2">Address *</label>
-              <Input
-                value={formData.address}
-                onChange={(e) => setFormData({...formData, address: e.target.value})}
-                placeholder="Enter full address"
-                className="bg-gray-800 border-blue-700 text-white"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-300 text-sm mb-2">ZIP Code</label>
-              <Input
-                value={formData.zip_code}
-                onChange={(e) => setFormData({...formData, zip_code: e.target.value})}
-                placeholder="ZIP code"
-                className="bg-gray-800 border-blue-700 text-white"
-              />
-            </div>
+          <div>
+            <Label htmlFor="address" className="text-gray-300">Address *</Label>
+            <Input
+              id="address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="123 Main St, City, State"
+              className="bg-gray-800 border-blue-700 text-white"
+              required
+            />
           </div>
 
           <div>
-            <label className="block text-gray-300 text-sm mb-2">Visit Result *</label>
-            <Select value={formData.result} onValueChange={(value) => setFormData({...formData, result: value})}>
+            <Label htmlFor="zipCode" className="text-gray-300">ZIP Code</Label>
+            <Input
+              id="zipCode"
+              value={zipCode}
+              onChange={(e) => setZipCode(e.target.value)}
+              placeholder="12345"
+              className="bg-gray-800 border-blue-700 text-white"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="result" className="text-gray-300">Visit Result *</Label>
+            <Select value={result} onValueChange={setResult} required>
               <SelectTrigger className="bg-gray-800 border-blue-700 text-white">
-                <SelectValue placeholder="Select result" />
+                <SelectValue placeholder="Select outcome..." />
               </SelectTrigger>
               <SelectContent className="bg-gray-800 border-blue-700">
                 {resultOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value} className="text-white">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded ${option.color}`}></div>
-                      {option.label}
-                    </div>
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -134,56 +133,52 @@ export const ActivityLogger = () => {
           </div>
 
           <div>
-            <label className="block text-gray-300 text-sm mb-2">Notes</label>
+            <Label htmlFor="notes" className="text-gray-300">Notes</Label>
             <Textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({...formData, notes: e.target.value})}
-              placeholder="Additional notes about the visit..."
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Additional details about the visit..."
               className="bg-gray-800 border-blue-700 text-white"
               rows={3}
             />
           </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="requires_followup"
-                checked={formData.requires_followup}
-                onChange={(e) => setFormData({...formData, requires_followup: e.target.checked})}
-                className="rounded border-blue-700"
-              />
-              <label htmlFor="requires_followup" className="text-gray-300 text-sm">
-                Requires Follow-up
-              </label>
-            </div>
-
-            {formData.requires_followup && (
-              <div className="flex items-center gap-2">
-                <Flag className="w-4 h-4 text-blue-400" />
-                <Select 
-                  value={formData.followup_priority.toString()} 
-                  onValueChange={(value) => setFormData({...formData, followup_priority: parseInt(value)})}
-                >
-                  <SelectTrigger className="w-24 bg-gray-800 border-blue-700 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-800 border-blue-700">
-                    <SelectItem value="1" className="text-white">Low</SelectItem>
-                    <SelectItem value="2" className="text-white">Medium</SelectItem>
-                    <SelectItem value="3" className="text-white">High</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="followup"
+              checked={requiresFollowup}
+              onCheckedChange={setRequiresFollowup}
+              className="border-blue-700"
+            />
+            <Label htmlFor="followup" className="text-gray-300">
+              Requires Follow-up
+            </Label>
           </div>
 
-          <Button 
-            type="submit" 
+          {requiresFollowup && (
+            <div>
+              <Label htmlFor="priority" className="text-gray-300">Follow-up Priority</Label>
+              <Select value={followupPriority} onValueChange={setFollowupPriority}>
+                <SelectTrigger className="bg-gray-800 border-blue-700 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-blue-700">
+                  <SelectItem value="1" className="text-white">Low (1)</SelectItem>
+                  <SelectItem value="2" className="text-white">Medium (2)</SelectItem>
+                  <SelectItem value="3" className="text-white">High (3)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          <Button
+            type="submit"
             disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white"
           >
-            {loading ? 'Logging...' : 'Log Visit'}
+            <Save className="w-4 h-4 mr-2" />
+            {loading ? "Saving..." : "Log Activity"}
           </Button>
         </form>
       </CardContent>

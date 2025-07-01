@@ -23,13 +23,27 @@ export const TimeTracker = () => {
   const [currentEntry, setCurrentEntry] = useState<TimeEntry | null>(null);
   const [recentEntries, setRecentEntries] = useState<TimeEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update current time every second when working
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isWorking) {
+      interval = setInterval(() => {
+        setCurrentTime(new Date());
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isWorking]);
 
   const fetchTimeEntries = async () => {
     if (!canvasser) return;
 
     try {
       const { data, error } = await supabase
-        .from('time_entries')
+        .from('time_entries' as any)
         .select('*')
         .eq('canvasser_id', canvasser.id)
         .order('clock_in', { ascending: false })
@@ -37,10 +51,11 @@ export const TimeTracker = () => {
 
       if (error) throw error;
 
-      setRecentEntries(data || []);
+      const timeEntries = (data || []) as TimeEntry[];
+      setRecentEntries(timeEntries);
       
       // Check if there's an active session
-      const activeEntry = data?.find(entry => !entry.clock_out);
+      const activeEntry = timeEntries.find(entry => !entry.clock_out);
       if (activeEntry) {
         setCurrentEntry(activeEntry);
         setIsWorking(true);
@@ -60,7 +75,7 @@ export const TimeTracker = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('time_entries')
+        .from('time_entries' as any)
         .insert([{
           canvasser_id: canvasser.id,
           clock_in: new Date().toISOString()
@@ -70,7 +85,8 @@ export const TimeTracker = () => {
 
       if (error) throw error;
 
-      setCurrentEntry(data);
+      const newEntry = data as TimeEntry;
+      setCurrentEntry(newEntry);
       setIsWorking(true);
       await fetchTimeEntries();
       
@@ -99,7 +115,7 @@ export const TimeTracker = () => {
       const totalHours = (clockOutTime.getTime() - clockInTime.getTime()) / (1000 * 60 * 60);
 
       const { error } = await supabase
-        .from('time_entries')
+        .from('time_entries' as any)
         .update({
           clock_out: clockOutTime.toISOString(),
           total_hours: Math.round(totalHours * 100) / 100
@@ -130,9 +146,8 @@ export const TimeTracker = () => {
   const getCurrentSessionTime = () => {
     if (!currentEntry) return "00:00:00";
     
-    const now = new Date();
     const clockIn = new Date(currentEntry.clock_in);
-    const diff = now.getTime() - clockIn.getTime();
+    const diff = currentTime.getTime() - clockIn.getTime();
     
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
