@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Edit, Plus, Trash2, Save } from "lucide-react";
+import { Edit, Plus, Trash2, Save, Move3D } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface ContentSection {
@@ -55,14 +55,23 @@ export const ContentEditor = ({ sections, onSectionsChange }: ContentEditorProps
   };
 
   const handleSave = () => {
+    if (!formData.title?.trim() && formData.type !== 'button') {
+      toast({
+        title: "Validation Error",
+        description: "Please provide a title for this section",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const newSection: ContentSection = {
       id: editingSection?.id || `section-${Date.now()}`,
       type: formData.type || 'text',
-      title: formData.title,
-      content: formData.content,
-      imageUrl: formData.imageUrl,
-      buttonText: formData.buttonText,
-      buttonLink: formData.buttonLink
+      title: formData.title?.trim(),
+      content: formData.content?.trim(),
+      imageUrl: formData.imageUrl?.trim(),
+      buttonText: formData.buttonText?.trim(),
+      buttonLink: formData.buttonLink?.trim()
     };
 
     if (editingSection) {
@@ -88,6 +97,30 @@ export const ContentEditor = ({ sections, onSectionsChange }: ContentEditorProps
     });
   };
 
+  const moveSection = (index: number, direction: 'up' | 'down') => {
+    const newSections = [...sections];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    
+    if (targetIndex >= 0 && targetIndex < sections.length) {
+      [newSections[index], newSections[targetIndex]] = [newSections[targetIndex], newSections[index]];
+      onSectionsChange(newSections);
+      toast({
+        title: "Section Moved",
+        description: `Section moved ${direction} successfully`
+      });
+    }
+  };
+
+  const getSectionTypeLabel = (type: string) => {
+    switch (type) {
+      case 'hero': return 'Hero Banner';
+      case 'text': return 'Text Content';
+      case 'image': return 'Image Gallery';
+      case 'button': return 'Call to Action';
+      default: return type;
+    }
+  };
+
   return (
     <Card className="bg-gray-800 border-gray-700">
       <CardHeader>
@@ -95,7 +128,7 @@ export const ContentEditor = ({ sections, onSectionsChange }: ContentEditorProps
           <span>Content Editor</span>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => handleOpenDialog()} className="bg-black hover:bg-gray-700">
+              <Button onClick={() => handleOpenDialog()} className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Section
               </Button>
@@ -179,7 +212,7 @@ export const ContentEditor = ({ sections, onSectionsChange }: ContentEditorProps
                   </>
                 )}
 
-                <Button onClick={handleSave} className="w-full bg-black hover:bg-gray-700">
+                <Button onClick={handleSave} className="w-full bg-blue-600 hover:bg-blue-700">
                   <Save className="w-4 h-4 mr-2" />
                   {editingSection ? 'Update Section' : 'Add Section'}
                 </Button>
@@ -190,26 +223,53 @@ export const ContentEditor = ({ sections, onSectionsChange }: ContentEditorProps
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {sections.map((section) => (
-            <div key={section.id} className="flex items-center justify-between p-3 border border-gray-600 rounded-lg bg-gray-700">
-              <div>
-                <p className="font-medium text-white">{section.title || `${section.type} section`}</p>
-                <p className="text-sm text-gray-400">Type: {section.type}</p>
+          {sections.map((section, index) => (
+            <div key={section.id} className="flex items-center justify-between p-4 border border-gray-600 rounded-lg bg-gray-700">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded">
+                    {getSectionTypeLabel(section.type)}
+                  </span>
+                  <p className="font-medium text-white">{section.title || `${section.type} section`}</p>
+                </div>
+                {section.content && (
+                  <p className="text-sm text-gray-300 truncate max-w-md">
+                    {section.content.substring(0, 100)}{section.content.length > 100 ? '...' : ''}
+                  </p>
+                )}
               </div>
               <div className="flex gap-2">
                 <Button 
-                  variant="outline" 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => moveSection(index, 'up')}
+                  disabled={index === 0}
+                  className="text-gray-300 hover:text-white hover:bg-gray-600"
+                >
+                  ↑
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => moveSection(index, 'down')}
+                  disabled={index === sections.length - 1}
+                  className="text-gray-300 hover:text-white hover:bg-gray-600"
+                >
+                  ↓
+                </Button>
+                <Button 
+                  variant="ghost" 
                   size="sm" 
                   onClick={() => handleOpenDialog(section)}
-                  className="border-gray-600 text-gray-300 hover:bg-gray-600"
+                  className="text-blue-400 hover:text-blue-300 hover:bg-gray-600"
                 >
                   <Edit className="w-4 h-4" />
                 </Button>
                 <Button 
-                  variant="outline" 
+                  variant="ghost" 
                   size="sm" 
                   onClick={() => handleDelete(section.id)}
-                  className="text-red-400 hover:text-red-300 border-gray-600 hover:bg-gray-600"
+                  className="text-red-400 hover:text-red-300 hover:bg-gray-600"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -217,8 +277,12 @@ export const ContentEditor = ({ sections, onSectionsChange }: ContentEditorProps
             </div>
           ))}
           {sections.length === 0 && (
-            <div className="text-center py-8 text-gray-400">
-              No content sections. Add your first section to get started.
+            <div className="text-center py-12 text-gray-400">
+              <div className="mb-4">
+                <Plus className="w-12 h-12 mx-auto opacity-50" />
+              </div>
+              <p className="text-lg mb-2">No content sections yet</p>
+              <p className="text-sm">Add your first section to get started with custom content.</p>
             </div>
           )}
         </div>

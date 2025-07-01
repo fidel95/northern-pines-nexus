@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { toast } from '@/hooks/use-toast';
 
 interface InlineEditorProps {
   content: string;
@@ -21,28 +22,66 @@ export const InlineEditor = ({
   className = "",
   placeholder = "Click to edit..."
 }: InlineEditorProps) => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
 
-  if (!isAdmin) {
-    return <span className={className}>{content}</span>;
+  // Update editContent when content prop changes
+  React.useEffect(() => {
+    setEditContent(content);
+  }, [content]);
+
+  if (!isAdmin || !user) {
+    return <span className={className}>{content || placeholder}</span>;
   }
 
   const handleSave = async () => {
-    setIsSaving(true);
-    const success = await onSave(editContent);
-    setIsSaving(false);
-    
-    if (success) {
+    if (editContent.trim() === content.trim()) {
       setIsEditing(false);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const success = await onSave(editContent.trim());
+      
+      if (success) {
+        setIsEditing(false);
+        toast({
+          title: "Content Updated",
+          description: "Your changes have been saved successfully.",
+        });
+      } else {
+        toast({
+          title: "Save Failed",
+          description: "There was an error saving your changes. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+      toast({
+        title: "Save Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleCancel = () => {
     setEditContent(content);
     setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      handleCancel();
+    } else if (e.key === 'Enter' && !multiline && (e.ctrlKey || e.metaKey)) {
+      handleSave();
+    }
   };
 
   if (isEditing) {
@@ -52,17 +91,21 @@ export const InlineEditor = ({
           <Textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            className={`${className} min-h-[100px] bg-white border-2 border-blue-500`}
+            onKeyDown={handleKeyDown}
+            className={`${className} min-h-[100px] bg-white border-2 border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
             placeholder={placeholder}
             autoFocus
+            disabled={isSaving}
           />
         ) : (
           <Input
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            className={`${className} bg-white border-2 border-blue-500`}
+            onKeyDown={handleKeyDown}
+            className={`${className} bg-white border-2 border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
             placeholder={placeholder}
             autoFocus
+            disabled={isSaving}
           />
         )}
         <div className="flex gap-2 mt-2">
@@ -70,7 +113,7 @@ export const InlineEditor = ({
             size="sm"
             onClick={handleSave}
             disabled={isSaving}
-            className="bg-green-600 hover:bg-green-700"
+            className="bg-green-600 hover:bg-green-700 disabled:opacity-50"
           >
             <Check className="w-4 h-4" />
             {isSaving ? 'Saving...' : 'Save'}
@@ -80,22 +123,29 @@ export const InlineEditor = ({
             variant="outline"
             onClick={handleCancel}
             disabled={isSaving}
+            className="disabled:opacity-50"
           >
             <X className="w-4 h-4" />
             Cancel
           </Button>
         </div>
+        {!multiline && (
+          <div className="text-xs text-gray-500 mt-1">
+            Press Ctrl+Enter to save, Escape to cancel
+          </div>
+        )}
       </div>
     );
   }
 
   return (
     <div
-      className={`${className} group relative cursor-pointer hover:bg-blue-50 hover:bg-opacity-50 rounded p-1 transition-colors`}
+      className={`${className} group relative cursor-pointer hover:bg-blue-50 hover:bg-opacity-50 rounded p-2 transition-all duration-200 border border-transparent hover:border-blue-200`}
       onClick={() => setIsEditing(true)}
+      title="Click to edit"
     >
-      {content || placeholder}
-      <Edit className="w-4 h-4 absolute top-1 right-1 opacity-0 group-hover:opacity-50 transition-opacity" />
+      {content || <span className="text-gray-400 italic">{placeholder}</span>}
+      <Edit className="w-4 h-4 absolute top-2 right-2 opacity-0 group-hover:opacity-70 transition-opacity bg-white rounded p-0.5 shadow-sm" />
     </div>
   );
 };

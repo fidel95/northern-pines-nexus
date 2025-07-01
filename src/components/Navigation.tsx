@@ -9,12 +9,42 @@ export const Navigation = () => {
   const isDashboard = location.pathname === '/dashboard';
 
   const navItems = [
-    { name: "Home", href: "/#home" },
-    { name: "Services", href: "/#services" },
-    { name: "About", href: "/#about" },
-    { name: "Projects", href: "/#projects" },
-    { name: "Contact", href: "/#contact" },
+    { name: "Home", href: "/", isExternal: false },
+    { name: "Services", href: "/services", isExternal: false },
+    { name: "Projects", href: "/projects", isExternal: false },
+    { name: "About", href: "/#about", isExternal: true },
+    { name: "Contact", href: "/#contact", isExternal: true },
   ];
+
+  const renderNavLink = (item: typeof navItems[0], isMobile = false) => {
+    const baseClasses = isMobile 
+      ? "text-gray-700 hover:text-green-800 block px-3 py-2 rounded-md text-base font-medium"
+      : "text-gray-700 hover:text-green-800 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200";
+
+    if (item.isExternal) {
+      return (
+        <a
+          key={item.name}
+          href={item.href}
+          className={baseClasses}
+          onClick={isMobile ? () => setIsOpen(false) : undefined}
+        >
+          {item.name}
+        </a>
+      );
+    }
+
+    return (
+      <Link
+        key={item.name}
+        to={item.href}
+        className={baseClasses}
+        onClick={isMobile ? () => setIsOpen(false) : undefined}
+      >
+        {item.name}
+      </Link>
+    );
+  };
 
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50">
@@ -28,15 +58,7 @@ export const Navigation = () => {
           
           <div className="hidden lg:block">
             <div className="ml-10 flex items-baseline space-x-4">
-              {!isDashboard && navItems.map((item) => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className="text-gray-700 hover:text-green-800 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-                >
-                  {item.name}
-                </a>
-              ))}
+              {!isDashboard && navItems.map((item) => renderNavLink(item))}
               {isDashboard && (
                 <Link
                   to="/"
@@ -80,16 +102,7 @@ export const Navigation = () => {
       {isOpen && (
         <div className="lg:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white shadow-lg border-t">
-            {!isDashboard && navItems.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="text-gray-700 hover:text-green-800 block px-3 py-2 rounded-md text-base font-medium"
-                onClick={() => setIsOpen(false)}
-              >
-                {item.name}
-              </a>
-            ))}
+            {!isDashboard && navItems.map((item) => renderNavLink(item, true))}
             {isDashboard && (
               <Link
                 to="/"
