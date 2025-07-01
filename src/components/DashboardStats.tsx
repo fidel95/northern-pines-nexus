@@ -16,71 +16,73 @@ export const DashboardStats = () => {
     totalCanvassers: 0,
     activeTasks: 0
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Fetch leads data
-        const { data: leads } = await supabase
-          .from('leads')
-          .select('status');
+        setLoading(true);
+        setError(null);
 
-        // Fetch inventory data
-        const { data: inventory } = await supabase
-          .from('inventory')
-          .select('quantity, min_stock');
+        // Fetch all data with error handling for each query
+        const queries = await Promise.allSettled([
+          supabase.from('leads').select('status'),
+          supabase.from('inventory').select('quantity, min_stock'),
+          supabase.from('quotes').select('status'),
+          supabase.from('salespeople').select('id').eq('active', true),
+          supabase.from('canvassers').select('id').eq('active', true),
+          supabase.from('tasks').select('completed'),
+        ]);
 
-        // Fetch quotes data
-        const { data: quotes } = await supabase
-          .from('quotes')
-          .select('status');
+        const [leadsResult, inventoryResult, quotesResult, salespeopleResult, canvassersResult, tasksResult] = queries;
 
-        // Fetch salespeople data
-        const { data: salespeople } = await supabase
-          .from('salespeople')
-          .select('id')
-          .eq('active', true);
+        let newStats = { ...stats };
 
-        // Fetch canvassers data
-        const { data: canvassers } = await supabase
-          .from('canvassers')
-          .select('id')
-          .eq('active', true);
-
-        // Fetch tasks data
-        const { data: tasks } = await supabase
-          .from('tasks')
-          .select('completed');
-
-        if (leads) {
-          const totalLeads = leads.length;
-          const newLeads = leads.filter(lead => lead.status === 'New').length;
-          const activeProjects = leads.filter(lead => lead.status === 'In Progress').length;
-
-          const totalItems = inventory?.length || 0;
-          const lowStockItems = inventory?.filter(item => item.quantity <= item.min_stock).length || 0;
-
-          const pendingQuotes = quotes?.filter(quote => quote.status === 'pending').length || 0;
-          const totalQuotes = quotes?.length || 0;
-          const totalSalespeople = salespeople?.length || 0;
-          const totalCanvassers = canvassers?.length || 0;
-          const activeTasks = tasks?.filter(task => !task.completed).length || 0;
-
-          setStats({
-            totalLeads,
-            newLeads,
-            activeProjects,
-            totalItems,
-            lowStockItems,
-            pendingQuotes,
-            totalSalespeople,
-            totalQuotes,
-            totalCanvassers,
-            activeTasks
-          });
+        // Process leads data
+        if (leadsResult.status === 'fulfilled' && leadsResult.value.data) {
+          const leads = leadsResult.value.data;
+          newStats.totalLeads = leads.length;
+          newStats.newLeads = leads.filter(lead => lead.status === 'New').length;
+          newStats.activeProjects = leads.filter(lead => lead.status === 'In Progress').length;
         }
+
+        // Process inventory data
+        if (inventoryResult.status === 'fulfilled' && inventoryResult.value.data) {
+          const inventory = inventoryResult.value.data;
+          newStats.totalItems = inventory.length;
+          newStats.lowStockItems = inventory.filter(item => item.quantity <= item.min_stock).length;
+        }
+
+        // Process quotes data
+        if (quotesResult.status === 'fulfilled' && quotesResult.value.data) {
+          const quotes = quotesResult.value.data;
+          newStats.totalQuotes = quotes.length;
+          newStats.pendingQuotes = quotes.filter(quote => quote.status === 'pending').length;
+        }
+
+        // Process salespeople data
+        if (salespeopleResult.status === 'fulfilled' && salespeopleResult.value.data) {
+          newStats.totalSalespeople = salespeopleResult.value.data.length;
+        }
+
+        // Process canvassers data
+        if (canvassersResult.status === 'fulfilled' && canvassersResult.value.data) {
+          newStats.totalCanvassers = canvassersResult.value.data.length;
+        }
+
+        // Process tasks data
+        if (tasksResult.status === 'fulfilled' && tasksResult.value.data) {
+          const tasks = tasksResult.value.data;
+          newStats.activeTasks = tasks.filter(task => !task.completed).length;
+        }
+
+        setStats(newStats);
       } catch (error) {
         console.error('Error fetching stats:', error);
+        setError('Failed to load dashboard statistics');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -145,6 +147,33 @@ export const DashboardStats = () => {
       color: "bg-gray-700"
     }
   ];
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div key={index} className="bg-gray-900 border border-blue-800 rounded-lg shadow-xl p-6 animate-pulse">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="h-4 bg-gray-700 rounded mb-2"></div>
+                <div className="h-8 bg-gray-700 rounded mb-2"></div>
+                <div className="h-3 bg-gray-700 rounded w-2/3"></div>
+              </div>
+              <div className="w-12 h-12 bg-gray-700 rounded-full"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-900 border border-red-600 rounded-lg p-6 text-center">
+        <p className="text-red-200">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

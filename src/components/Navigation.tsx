@@ -12,27 +12,14 @@ export const Navigation = () => {
     { name: "Home", href: "/", isExternal: false },
     { name: "Services", href: "/services", isExternal: false },
     { name: "Projects", href: "/projects", isExternal: false },
-    { name: "About", href: "/#about", isExternal: true },
-    { name: "Contact", href: "/#contact", isExternal: true },
+    { name: "About Us", href: "/about-us", isExternal: false },
+    { name: "Contact Us", href: "/contact-us", isExternal: false },
   ];
 
   const renderNavLink = (item: typeof navItems[0], isMobile = false) => {
     const baseClasses = isMobile 
       ? "text-gray-700 hover:text-green-800 block px-3 py-2 rounded-md text-base font-medium"
       : "text-gray-700 hover:text-green-800 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200";
-
-    if (item.isExternal) {
-      return (
-        <a
-          key={item.name}
-          href={item.href}
-          className={baseClasses}
-          onClick={isMobile ? () => setIsOpen(false) : undefined}
-        >
-          {item.name}
-        </a>
-      );
-    }
 
     return (
       <Link

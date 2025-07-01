@@ -43,8 +43,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Auto-logout after 24 hours of inactivity
+  const setupAutoLogout = () => {
+    const timeout = 24 * 60 * 60 * 1000; // 24 hours
+    const timeoutId = setTimeout(async () => {
+      console.log('Auto-logout due to inactivity');
+      await signOut();
+    }, timeout);
+
+    return () => clearTimeout(timeoutId);
+  };
+
   useEffect(() => {
     let mounted = true;
+    let cleanupAutoLogout: (() => void) | null = null;
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -53,25 +65,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         console.log('Auth state changed:', event, session?.user?.email);
         
+        // Clear previous auto-logout
+        if (cleanupAutoLogout) {
+          cleanupAutoLogout();
+          cleanupAutoLogout = null;
+        }
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Check admin status with a small delay to avoid potential race conditions
-          setTimeout(async () => {
-            if (!mounted) return;
+          // Set up auto-logout for active sessions
+          cleanupAutoLogout = setupAutoLogout();
+          
+          // Check admin status with retry logic
+          let retryCount = 0;
+          const maxRetries = 3;
+          
+          const checkAdminWithRetry = async () => {
             try {
               const adminStatus = await checkAdminStatus(session.user.id);
               if (mounted) {
                 setIsAdmin(adminStatus);
+                console.log('Admin status:', adminStatus);
               }
             } catch (error) {
-              console.error('Error checking admin status:', error);
-              if (mounted) {
-                setIsAdmin(false);
+              console.error(`Admin check attempt ${retryCount + 1} failed:`, error);
+              if (retryCount < maxRetries - 1) {
+                retryCount++;
+                setTimeout(checkAdminWithRetry, 1000 * retryCount); // Progressive delay
+              } else {
+                console.error('All admin check attempts failed');
+                if (mounted) {
+                  setIsAdmin(false);
+                }
               }
             }
-          }, 100);
+          };
+          
+          // Small delay to avoid race conditions
+          setTimeout(checkAdminWithRetry, 100);
         } else {
           setIsAdmin(false);
         }
@@ -95,6 +128,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(session?.user ?? null);
           
           if (session?.user) {
+            cleanupAutoLogout = setupAutoLogout();
             const adminStatus = await checkAdminStatus(session.user.id);
             if (mounted) {
               setIsAdmin(adminStatus);
@@ -115,6 +149,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       mounted = false;
+      if (cleanupAutoLogout) {
+        cleanupAutoLogout();
+      }
       subscription.unsubscribe();
     };
   }, []);
@@ -129,6 +166,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    // Clear local state immediately
+    setUser(null);
+    setSession(null);
+    setIsAdmin(false);
   };
 
   return (

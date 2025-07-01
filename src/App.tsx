@@ -9,6 +9,8 @@ import { CanvasserAuthProvider } from "@/contexts/CanvasserAuthContext";
 import Index from "./pages/Index";
 import Services from "./pages/Services";
 import Projects from "./pages/Projects";
+import ContactUs from "./pages/ContactUs";
+import AboutUs from "./pages/AboutUs";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import CanvasserAuth from "./pages/CanvasserAuth";
@@ -29,6 +31,8 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/services" element={<Services />} />
               <Route path="/projects" element={<Projects />} />
+              <Route path="/contact-us" element={<ContactUs />} />
+              <Route path="/about-us" element={<AboutUs />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/canvasser-auth" element={<CanvasserAuth />} />

@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, LogIn } from "lucide-react";
 import { LeadsManager } from "@/components/LeadsManager";
 import { InventoryManager } from "@/components/InventoryManager";
 import { DashboardStats } from "@/components/DashboardStats";
@@ -47,7 +46,23 @@ const Dashboard = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
           <p className="text-gray-400 mb-4">You need admin privileges to access this dashboard.</p>
-          <Button onClick={() => signOut()} className="bg-blue-600 hover:bg-blue-700">Sign Out</Button>
+          <div className="flex gap-4 justify-center">
+            <Button 
+              onClick={() => navigate('/auth')} 
+              className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+            >
+              <LogIn className="w-4 h-4" />
+              Sign In
+            </Button>
+            <Button 
+              onClick={() => signOut()} 
+              variant="outline"
+              className="border-blue-600 text-blue-400 hover:bg-blue-900 flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </Button>
+          </div>
         </div>
       </div>
     );
