@@ -8,6 +8,7 @@ import { TimeTracker } from "@/components/canvasser/TimeTracker";
 import { DailySchedule } from "@/components/canvasser/DailySchedule";
 import { ActivityLogger } from "@/components/canvasser/ActivityLogger";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 
 const CanvasserDashboard = () => {
   const { canvasser, signOut, isLoading } = useCanvasserAuth();
@@ -22,18 +23,36 @@ const CanvasserDashboard = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-xl text-white">Loading...</div>
+        <div className="text-xl text-white">Loading dashboard...</div>
       </div>
     );
   }
 
   if (!canvasser) {
-    return null;
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
+          <p className="text-gray-400 mb-6">Please sign in to access your canvasser dashboard.</p>
+          <Button 
+            onClick={() => navigate('/canvasser-auth')}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   const handleLogout = async () => {
-    await signOut();
-    navigate('/canvasser-auth');
+    try {
+      await signOut();
+      navigate('/canvasser-auth');
+    } catch (error) {
+      console.error('Logout error:', error);
+      navigate('/canvasser-auth');
+    }
   };
 
   return (
@@ -61,6 +80,27 @@ const CanvasserDashboard = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Welcome Card */}
+        <Card className="bg-gray-900 border-blue-800 mb-8">
+          <CardContent className="p-6">
+            <h2 className="text-2xl font-bold text-white mb-4">Welcome to Your Dashboard</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+              <div className="bg-gray-800 p-4 rounded-lg">
+                <div className="text-blue-400 text-2xl font-bold">{canvasser.total_visits || 0}</div>
+                <div className="text-gray-400 text-sm">Total Visits</div>
+              </div>
+              <div className="bg-gray-800 p-4 rounded-lg">
+                <div className="text-green-400 text-2xl font-bold">{canvasser.leads_generated || 0}</div>
+                <div className="text-gray-400 text-sm">Leads Generated</div>
+              </div>
+              <div className="bg-gray-800 p-4 rounded-lg">
+                <div className="text-yellow-400 text-2xl font-bold">{canvasser.conversion_rate || 0}%</div>
+                <div className="text-gray-400 text-sm">Conversion Rate</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Tabs defaultValue="time" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 bg-gray-900 border-blue-800">
             <TabsTrigger 

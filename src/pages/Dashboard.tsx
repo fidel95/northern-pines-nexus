@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,7 @@ const Dashboard = () => {
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
-          <p className="text-gray-400 mb-4">You need admin privileges to access this dashboard.</p>
+          <p className="text-gray-400 mb-6">You need admin privileges to access this dashboard.</p>
           <div className="flex gap-4 justify-center">
             <Button 
               onClick={() => navigate('/auth')} 
@@ -95,7 +96,7 @@ const Dashboard = () => {
         <DashboardStats />
         
         <Tabs defaultValue="leads" className="mt-8">
-          <TabsList className="grid w-full grid-cols-9 bg-gray-900 border-blue-800 shadow-lg">
+          <TabsList className="grid w-full grid-cols-10 bg-gray-900 border-blue-800 shadow-lg">
             <TabsTrigger value="leads" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Leads</TabsTrigger>
             <TabsTrigger value="submissions" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Submissions</TabsTrigger>
             <TabsTrigger value="quotes" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Quotes</TabsTrigger>
@@ -105,6 +106,7 @@ const Dashboard = () => {
             <TabsTrigger value="canvassers" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Canvassers</TabsTrigger>
             <TabsTrigger value="activities" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Activities</TabsTrigger>
             <TabsTrigger value="inventory" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Inventory</TabsTrigger>
+            <TabsTrigger value="admins" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200">Admins</TabsTrigger>
           </TabsList>
           
           <TabsContent value="leads">
@@ -141,6 +143,10 @@ const Dashboard = () => {
           
           <TabsContent value="inventory">
             <InventoryManager />
+          </TabsContent>
+
+          <TabsContent value="admins">
+            <AdminManager />
           </TabsContent>
         </Tabs>
       </div>

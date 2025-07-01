@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,20 +8,27 @@ import { useAuth } from "@/contexts/SupabaseAuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Lock, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, user } = useAuth();
+  const { signIn, user, isLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
+    if (!isLoading && user) {
       navigate('/dashboard');
     }
-  }, [user, navigate]);
+  }, [user, isLoading, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-xl text-white">Loading...</div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,22 +37,34 @@ const Auth = () => {
     try {
       const { error } = await signIn(email, password);
       if (error) {
+        let errorMessage = error.message;
+        
+        // Provide user-friendly error messages
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = 'Please check your email and confirm your account before signing in.';
+        } else if (error.message.includes('Too many requests')) {
+          errorMessage = 'Too many login attempts. Please wait a moment before trying again.';
+        }
+        
         toast({
           title: "Login Failed",
-          description: error.message,
+          description: errorMessage,
           variant: "destructive",
         });
       } else {
         toast({
           title: "Login Successful",
-          description: "Welcome back!",
+          description: "Welcome back! Redirecting to dashboard...",
         });
-        navigate('/dashboard');
+        // Navigation will happen via useEffect when user state updates
       }
     } catch (error) {
+      console.error('Login error:', error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -54,7 +73,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
       <Card className="w-full max-w-md bg-gray-800 border-gray-700">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 w-16 h-16 bg-black rounded-full flex items-center justify-center">
@@ -77,6 +96,7 @@ const Auth = () => {
                   placeholder="Enter your email"
                   className="pl-10 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                   required
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -92,6 +112,7 @@ const Auth = () => {
                   placeholder="Enter your password"
                   className="pl-10 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                   required
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -100,7 +121,7 @@ const Auth = () => {
               className="w-full bg-black hover:bg-gray-800 text-white"
               disabled={loading}
             >
-              {loading ? 'Loading...' : 'Login'}
+              {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
           
@@ -108,6 +129,16 @@ const Auth = () => {
             <strong>Default Admin:</strong><br />
             Email: admin@admin.com<br />
             Password: admin
+          </div>
+          
+          <div className="mt-4 text-center">
+            <Button 
+              variant="link" 
+              onClick={() => navigate('/canvasser-auth')}
+              className="text-blue-400 hover:text-blue-300"
+            >
+              Canvasser Login →
+            </Button>
           </div>
         </CardContent>
       </Card>

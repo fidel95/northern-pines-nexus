@@ -34,31 +34,46 @@ export const CanvasserAuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        // Check if user is a canvasser
-        const { data, error } = await supabase
-          .from('canvassers')
-          .select('*')
-          .eq('email', session.user.email)
-          .eq('active', true)
-          .single();
-        
-        if (!error && data) {
-          setCanvasser(data);
-        }
-      }
-      setIsLoading(false);
-    };
+    let mounted = true;
 
-    checkSession();
-
-    // Set up auth state listener
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mounted) return;
+
+        console.log('Canvasser auth state changed:', event, session?.user?.email);
+        
         if (session?.user) {
+          try {
+            const { data, error } = await supabase
+              .from('canvassers')
+              .select('*')
+              .eq('email', session.user.email)
+              .eq('active', true)
+              .single();
+            
+            if (!error && data && mounted) {
+              setCanvasser(data);
+            } else {
+              if (mounted) setCanvasser(null);
+            }
+          } catch (error) {
+            console.error('Error fetching canvasser data:', error);
+            if (mounted) setCanvasser(null);
+          }
+        } else {
+          if (mounted) setCanvasser(null);
+        }
+        
+        if (mounted) setIsLoading(false);
+      }
+    );
+
+    // THEN check for existing session
+    const checkSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user && mounted) {
           const { data, error } = await supabase
             .from('canvassers')
             .select('*')
@@ -68,30 +83,45 @@ export const CanvasserAuthProvider: React.FC<{ children: React.ReactNode }> = ({
           
           if (!error && data) {
             setCanvasser(data);
-          } else {
-            setCanvasser(null);
           }
-        } else {
-          setCanvasser(null);
         }
-        setIsLoading(false);
+      } catch (error) {
+        console.error('Error checking canvasser session:', error);
+      } finally {
+        if (mounted) setIsLoading(false);
       }
-    );
+    };
 
-    return () => subscription.unsubscribe();
+    checkSession();
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    return { error };
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      return { error };
+    } catch (error) {
+      console.error('Canvasser sign in error:', error);
+      return { error };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setCanvasser(null);
+    try {
+      await supabase.auth.signOut();
+      setCanvasser(null);
+    } catch (error) {
+      console.error('Canvasser sign out error:', error);
+      // Still clear local state
+      setCanvasser(null);
+    }
   };
 
   return (

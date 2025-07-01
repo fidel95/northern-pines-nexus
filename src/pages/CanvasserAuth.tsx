@@ -13,14 +13,22 @@ const CanvasserAuth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, canvasser } = useCanvasserAuth();
+  const { signIn, canvasser, isLoading } = useCanvasserAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (canvasser) {
+    if (!isLoading && canvasser) {
       navigate('/canvasser-dashboard');
     }
-  }, [canvasser, navigate]);
+  }, [canvasser, isLoading, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-xl text-white">Loading...</div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,22 +37,34 @@ const CanvasserAuth = () => {
     try {
       const { error } = await signIn(email, password);
       if (error) {
+        let errorMessage = error.message;
+        
+        // Provide user-friendly error messages
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = 'Please check your email and confirm your account before signing in.';
+        } else if (error.message.includes('Too many requests')) {
+          errorMessage = 'Too many login attempts. Please wait a moment before trying again.';
+        }
+        
         toast({
           title: "Login Failed",
-          description: error.message,
+          description: errorMessage,
           variant: "destructive",
         });
       } else {
         toast({
           title: "Login Successful",
-          description: "Welcome back!",
+          description: "Welcome back! Loading your dashboard...",
         });
-        navigate('/canvasser-dashboard');
+        // Navigation will happen via useEffect when canvasser state updates
       }
     } catch (error) {
+      console.error('Canvasser login error:', error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -53,7 +73,7 @@ const CanvasserAuth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
+    <div className="min-h-screen bg-black flex items-center justify-center px-4">
       <Card className="w-full max-w-md bg-gray-900 border-blue-800">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
@@ -76,6 +96,7 @@ const CanvasserAuth = () => {
                   placeholder="Enter your email"
                   className="pl-10 bg-gray-800 border-blue-700 text-white placeholder-gray-400"
                   required
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -91,6 +112,7 @@ const CanvasserAuth = () => {
                   placeholder="Enter your password"
                   className="pl-10 bg-gray-800 border-blue-700 text-white placeholder-gray-400"
                   required
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -105,6 +127,16 @@ const CanvasserAuth = () => {
           
           <div className="mt-4 p-3 bg-gray-800 rounded text-sm text-gray-300 text-center">
             Contact your administrator for login credentials.
+          </div>
+          
+          <div className="mt-4 text-center">
+            <Button 
+              variant="link" 
+              onClick={() => navigate('/auth')}
+              className="text-blue-400 hover:text-blue-300"
+            >
+              ← Admin Login
+            </Button>
           </div>
         </CardContent>
       </Card>

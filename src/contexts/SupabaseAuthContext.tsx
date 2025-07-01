@@ -58,7 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let mounted = true;
     let cleanupAutoLogout: (() => void) | null = null;
 
-    // Set up auth state listener
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
@@ -78,33 +78,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Set up auto-logout for active sessions
           cleanupAutoLogout = setupAutoLogout();
           
-          // Check admin status with retry logic
-          let retryCount = 0;
-          const maxRetries = 3;
-          
-          const checkAdminWithRetry = async () => {
-            try {
-              const adminStatus = await checkAdminStatus(session.user.id);
-              if (mounted) {
-                setIsAdmin(adminStatus);
-                console.log('Admin status:', adminStatus);
-              }
-            } catch (error) {
-              console.error(`Admin check attempt ${retryCount + 1} failed:`, error);
-              if (retryCount < maxRetries - 1) {
-                retryCount++;
-                setTimeout(checkAdminWithRetry, 1000 * retryCount); // Progressive delay
-              } else {
-                console.error('All admin check attempts failed');
-                if (mounted) {
-                  setIsAdmin(false);
-                }
-              }
+          // Check admin status with better error handling
+          try {
+            const adminStatus = await checkAdminStatus(session.user.id);
+            if (mounted) {
+              setIsAdmin(adminStatus);
+              console.log('Admin status set:', adminStatus);
             }
-          };
-          
-          // Small delay to avoid race conditions
-          setTimeout(checkAdminWithRetry, 100);
+          } catch (error) {
+            console.error('Failed to check admin status:', error);
+            if (mounted) {
+              setIsAdmin(false);
+            }
+          }
         } else {
           setIsAdmin(false);
         }
@@ -115,26 +101,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Get initial session
+    // THEN check for existing session
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error('Error getting session:', error);
+          console.error('Error getting initial session:', error);
+          if (mounted) {
+            setIsLoading(false);
+          }
+          return;
         }
         
-        if (mounted) {
+        if (mounted && session?.user) {
           setSession(session);
-          setUser(session?.user ?? null);
+          setUser(session.user);
+          cleanupAutoLogout = setupAutoLogout();
           
-          if (session?.user) {
-            cleanupAutoLogout = setupAutoLogout();
+          try {
             const adminStatus = await checkAdminStatus(session.user.id);
             if (mounted) {
               setIsAdmin(adminStatus);
             }
+          } catch (error) {
+            console.error('Failed to check initial admin status:', error);
+            if (mounted) {
+              setIsAdmin(false);
+            }
           }
-          
+        }
+        
+        if (mounted) {
           setIsLoading(false);
         }
       } catch (error) {
@@ -157,19 +154,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    return { error };
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      return { error };
+    } catch (error) {
+      console.error('Sign in error:', error);
+      return { error };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    // Clear local state immediately
-    setUser(null);
-    setSession(null);
-    setIsAdmin(false);
+    try {
+      await supabase.auth.signOut();
+      // Clear local state immediately
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
+    } catch (error) {
+      console.error('Sign out error:', error);
+      // Still clear local state even if logout fails
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
+    }
   };
 
   return (

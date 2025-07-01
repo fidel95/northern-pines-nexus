@@ -13,6 +13,7 @@ import { ContentEditor } from "@/components/ContentEditor";
 import { Button } from "@/components/ui/button";
 import { Edit, Eye } from "lucide-react";
 import { useAuth } from "@/contexts/SupabaseAuthContext";
+import { toast } from "@/hooks/use-toast";
 
 interface ContentSection {
   id: string;
@@ -25,22 +26,70 @@ interface ContentSection {
 }
 
 const Index = () => {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isLoading } = useAuth();
   const [isEditMode, setIsEditMode] = useState(false);
   const [customSections, setCustomSections] = useState<ContentSection[]>([]);
+  const [editLoading, setEditLoading] = useState(false);
 
   // Load custom sections from localStorage
   useEffect(() => {
     const saved = localStorage.getItem('homepage-sections');
     if (saved) {
-      setCustomSections(JSON.parse(saved));
+      try {
+        setCustomSections(JSON.parse(saved));
+      } catch (error) {
+        console.error('Error parsing saved sections:', error);
+        setCustomSections([]);
+      }
     }
   }, []);
 
   // Save custom sections to localStorage
   const handleSectionsChange = (sections: ContentSection[]) => {
-    setCustomSections(sections);
-    localStorage.setItem('homepage-sections', JSON.stringify(sections));
+    try {
+      setCustomSections(sections);
+      localStorage.setItem('homepage-sections', JSON.stringify(sections));
+      toast({
+        title: "Content Saved",
+        description: "Your homepage changes have been saved successfully.",
+      });
+    } catch (error) {
+      console.error('Error saving sections:', error);
+      toast({
+        title: "Save Error",
+        description: "Failed to save your changes. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleEditMode = () => {
+    if (!user || !isAdmin) {
+      toast({
+        title: "Access Denied",
+        description: "You need admin privileges to edit the homepage.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setEditLoading(true);
+    setTimeout(() => {
+      setIsEditMode(!isEditMode);
+      setEditLoading(false);
+      
+      if (!isEditMode) {
+        toast({
+          title: "Edit Mode Enabled",
+          description: "You can now edit the homepage content.",
+        });
+      } else {
+        toast({
+          title: "Preview Mode",
+          description: "Switched back to preview mode.",
+        });
+      }
+    }, 100);
   };
 
   const renderCustomSection = (section: ContentSection) => {
@@ -68,7 +117,14 @@ const Index = () => {
           <section key={section.id} className="py-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
               {section.title && <h2 className="text-3xl font-bold text-gray-900 mb-8">{section.title}</h2>}
-              <img src={section.imageUrl} alt={section.title || 'Custom image'} className="mx-auto max-w-full h-auto rounded-lg shadow-lg" />
+              <img 
+                src={section.imageUrl} 
+                alt={section.title || 'Custom image'} 
+                className="mx-auto max-w-full h-auto rounded-lg shadow-lg"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
             </div>
           </section>
         );
@@ -78,7 +134,7 @@ const Index = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               {section.title && <h2 className="text-3xl font-bold text-gray-900 mb-8">{section.title}</h2>}
               <Button asChild className="bg-black hover:bg-gray-800 text-white px-8 py-3 text-lg">
-                <a href={section.buttonLink}>{section.buttonText}</a>
+                <a href={section.buttonLink || '#'}>{section.buttonText}</a>
               </Button>
             </div>
           </section>
@@ -93,22 +149,29 @@ const Index = () => {
       <Navigation />
       
       {/* Admin Edit Controls - Only show if admin is logged in */}
-      {user && isAdmin && (
+      {!isLoading && user && isAdmin && (
         <div className="fixed top-4 right-4 z-50">
           <Button
-            onClick={() => setIsEditMode(!isEditMode)}
+            onClick={toggleEditMode}
             variant="outline"
             className="bg-white/90 backdrop-blur-sm hover:bg-white shadow-lg"
+            disabled={editLoading}
           >
-            {isEditMode ? <Eye className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
-            {isEditMode ? 'Preview' : 'Edit Page'}
+            {editLoading ? (
+              'Loading...'
+            ) : (
+              <>
+                {isEditMode ? <Eye className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
+                {isEditMode ? 'Preview' : 'Edit Page'}
+              </>
+            )}
           </Button>
         </div>
       )}
 
       {/* Edit Mode */}
       {isEditMode && user && isAdmin && (
-        <div className="bg-gray-900 p-6">
+        <div className="bg-gray-900 p-6 border-b border-gray-700">
           <div className="max-w-7xl mx-auto">
             <h2 className="text-2xl font-bold text-white mb-4">Edit Homepage Content</h2>
             <ContentEditor sections={customSections} onSectionsChange={handleSectionsChange} />
@@ -116,7 +179,7 @@ const Index = () => {
         </div>
       )}
 
-      {/* Modern Homepage Sections */}
+      {/* Modern Homepage Sections - Always show unless in edit mode with custom sections */}
       {!isEditMode && (
         <>
           <ModernHero />
@@ -128,14 +191,19 @@ const Index = () => {
       )}
 
       {/* Custom Sections - Only when in edit mode */}
-      {isEditMode && customSections.map(renderCustomSection)}
+      {isEditMode && customSections.length > 0 && customSections.map(renderCustomSection)}
 
       {/* Legacy Sections - Only show when in edit mode and no custom sections */}
       {isEditMode && customSections.length === 0 && (
-        <>
-          <About />
-          <Projects />
-        </>
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mx-4 my-4">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                No custom sections found. Add sections using the editor above to customize your homepage.
+              </p>
+            </div>
+          </div>
+        </div>
       )}
 
       <Footer />
