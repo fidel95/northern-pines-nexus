@@ -10,6 +10,9 @@ interface Canvasser {
   assigned_territories: string[] | null;
   hire_date: string;
   active: boolean;
+  total_visits: number;
+  leads_generated: number;
+  conversion_rate: number;
 }
 
 interface CanvasserAuthContextType {
