@@ -8,11 +8,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Users, Award, Building, Wrench } from 'lucide-react';
 
 const AboutUs = () => {
-  const { getContent, updateContent } = useHomepageContent();
+  const { content, updateContent } = useHomepageContent();
 
-  const handleContentSave = async (section: string, field: string, content: string) => {
+  const getContent = (section: string, field: string) => {
+    return content[section]?.[field] || '';
+  };
+
+  const handleContentSave = async (section: string, field: string, newContent: string) => {
     try {
-      const success = await updateContent(section, field, content);
+      const success = await updateContent(section, field, newContent);
       return success;
     } catch (error) {
       console.error('Error saving content:', error);
