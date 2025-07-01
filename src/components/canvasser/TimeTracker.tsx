@@ -49,19 +49,28 @@ export const TimeTracker = () => {
         .order('clock_in', { ascending: false })
         .limit(10);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching time entries:', error);
+        return;
+      }
 
-      const timeEntries = (data || []) as TimeEntry[];
-      setRecentEntries(timeEntries);
-      
-      // Check if there's an active session
-      const activeEntry = timeEntries.find(entry => !entry.clock_out);
-      if (activeEntry) {
-        setCurrentEntry(activeEntry);
-        setIsWorking(true);
+      // Handle case where table doesn't exist yet
+      if (data) {
+        const timeEntries = data as unknown as TimeEntry[];
+        setRecentEntries(timeEntries);
+        
+        // Check if there's an active session
+        const activeEntry = timeEntries.find(entry => !entry.clock_out);
+        if (activeEntry) {
+          setCurrentEntry(activeEntry);
+          setIsWorking(true);
+        }
+      } else {
+        setRecentEntries([]);
       }
     } catch (error) {
       console.error('Error fetching time entries:', error);
+      setRecentEntries([]);
     }
   };
 
@@ -85,7 +94,7 @@ export const TimeTracker = () => {
 
       if (error) throw error;
 
-      const newEntry = data as TimeEntry;
+      const newEntry = data as unknown as TimeEntry;
       setCurrentEntry(newEntry);
       setIsWorking(true);
       await fetchTimeEntries();

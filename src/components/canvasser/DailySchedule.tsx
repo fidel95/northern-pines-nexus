@@ -38,11 +38,20 @@ export const DailySchedule = () => {
         .eq('assigned_date', today)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
-      const scheduleData = (data || []) as ScheduleItem[];
-      setScheduleItems(scheduleData);
+      if (error) {
+        console.error('Error fetching schedule:', error);
+        return;
+      }
+      
+      // Handle case where table doesn't exist yet
+      if (data) {
+        setScheduleItems(data as unknown as ScheduleItem[]);
+      } else {
+        setScheduleItems([]);
+      }
     } catch (error) {
       console.error('Error fetching schedule:', error);
+      setScheduleItems([]);
     }
   };
 

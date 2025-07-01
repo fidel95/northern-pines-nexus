@@ -83,6 +83,10 @@ export const ActivityLogger = () => {
     }
   };
 
+  const handleFollowupChange = (checked: boolean | "indeterminate") => {
+    setRequiresFollowup(checked === true);
+  };
+
   return (
     <Card className="bg-gray-900 border-blue-800">
       <CardHeader>
@@ -148,7 +152,7 @@ export const ActivityLogger = () => {
             <Checkbox
               id="followup"
               checked={requiresFollowup}
-              onCheckedChange={setRequiresFollowup}
+              onCheckedChange={handleFollowupChange}
               className="border-blue-700"
             />
             <Label htmlFor="followup" className="text-gray-300">
