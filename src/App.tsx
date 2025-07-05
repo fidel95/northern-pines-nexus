@@ -1,49 +1,96 @@
 
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/SupabaseAuthContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { CanvasserAuthProvider } from "@/contexts/CanvasserAuthContext";
-import Index from "./pages/Index";
-import Services from "./pages/Services";
-import Projects from "./pages/Projects";
-import ContactUs from "./pages/ContactUs";
-import AboutUs from "./pages/AboutUs";
-import Dashboard from "./pages/Dashboard";
-import Auth from "./pages/Auth";
-import CanvasserAuth from "./pages/CanvasserAuth";
-import CanvasserDashboard from "./pages/CanvasserDashboard";
-import NotFound from "./pages/NotFound";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
-const queryClient = new QueryClient();
+// Lazy load components for better performance
+const Index = lazy(() => import("./pages/Index"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const CanvasserDashboard = lazy(() => import("./pages/CanvasserDashboard"));
+const Auth = lazy(() => import("./pages/Auth"));
+const CanvasserAuth = lazy(() => import("./pages/CanvasserAuth"));
+const AboutUs = lazy(() => import("./pages/AboutUs"));
+const ContactUs = lazy(() => import("./pages/ContactUs"));
+const Services = lazy(() => import("./pages/Services"));
+const Projects = lazy(() => import("./pages/Projects"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      cacheTime: 1000 * 60 * 10, // 10 minutes
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+const AppLoadingFallback = () => (
+  <div className="min-h-screen bg-black flex items-center justify-center">
+    <LoadingSpinner message="Loading application..." size="lg" />
+  </div>
+);
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
         <AuthProvider>
           <CanvasserAuthProvider>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/services" element={<Services />} />
-              <Route path="/projects" element={<Projects />} />
-              <Route path="/contact-us" element={<ContactUs />} />
-              <Route path="/about-us" element={<AboutUs />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/canvasser-auth" element={<CanvasserAuth />} />
-              <Route path="/canvasser-dashboard" element={<CanvasserDashboard />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <BrowserRouter>
+              <div className="min-h-screen">
+                <Suspense fallback={<AppLoadingFallback />}>
+                  <Routes>
+                    {/* Public Routes */}
+                    <Route path="/" element={<Index />} />
+                    <Route path="/about-us" element={<AboutUs />} />
+                    <Route path="/contact-us" element={<ContactUs />} />
+                    <Route path="/services" element={<Services />} />
+                    <Route path="/projects" element={<Projects />} />
+                    
+                    {/* Auth Routes */}
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/canvasser-auth" element={<CanvasserAuth />} />
+                    
+                    {/* Protected Admin Routes */}
+                    <Route 
+                      path="/dashboard" 
+                      element={
+                        <ProtectedRoute requireAdmin>
+                          <Dashboard />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    
+                    {/* Protected Canvasser Routes */}
+                    <Route 
+                      path="/canvasser-dashboard" 
+                      element={
+                        <ProtectedRoute requireCanvasser>
+                          <CanvasserDashboard />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    
+                    {/* 404 Route */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+                <Toaster />
+              </div>
+            </BrowserRouter>
           </CanvasserAuthProvider>
         </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;

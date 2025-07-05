@@ -6,22 +6,27 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useCanvasserAuth } from "@/contexts/CanvasserAuthContext";
 import { toast } from "@/hooks/use-toast";
-import { MapPin, Mail, Lock, AlertCircle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { MapPin, Mail, Lock, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useLoadingState } from "@/hooks/useLoadingState";
 
 const CanvasserAuth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{email?: string, password?: string}>({});
-  const { signIn, canvasser, isLoading } = useCanvasserAuth();
+  const { signIn, canvasser, isLoading: authLoading } = useCanvasserAuth();
+  const { isLoading, error, withLoading } = useLoadingState();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const from = location.state?.from?.pathname || '/canvasser-dashboard';
 
   useEffect(() => {
-    if (!isLoading && canvasser) {
-      navigate('/canvasser-dashboard');
+    if (!authLoading && canvasser) {
+      navigate(from, { replace: true });
     }
-  }, [canvasser, isLoading, navigate]);
+  }, [canvasser, authLoading, navigate, from]);
 
   const validateForm = () => {
     const newErrors: {email?: string, password?: string} = {};
@@ -42,7 +47,7 @@ const CanvasserAuth = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  if (isLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
@@ -60,10 +65,7 @@ const CanvasserAuth = () => {
       return;
     }
 
-    setLoading(true);
-    setErrors({});
-
-    try {
+    const result = await withLoading(async () => {
       const { error } = await signIn(email, password);
       if (error) {
         let errorMessage = error.message;
@@ -74,48 +76,42 @@ const CanvasserAuth = () => {
           errorMessage = 'Please check your email and confirm your account before signing in.';
         } else if (error.message.includes('Too many requests')) {
           errorMessage = 'Too many login attempts. Please wait a moment before trying again.';
-        } else if (error.message.includes('signup_disabled')) {
-          errorMessage = 'Account access is restricted. Please contact your administrator.';
         }
         
-        toast({
-          title: "Login Failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Login Successful",
-          description: "Welcome back! Loading your dashboard...",
-        });
+        throw new Error(errorMessage);
       }
-    } catch (error) {
-      console.error('Canvasser login error:', error);
+      return true;
+    });
+
+    if (result) {
       toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        title: "Login Successful",
+        description: "Welcome back! Loading your dashboard...",
+      });
+    } else if (error) {
+      toast({
+        title: "Login Failed",
+        description: error,
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4">
-      <Card className="w-full max-w-md bg-gray-900 border-blue-800">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
+      <Card className="w-full max-w-md bg-gray-900 border-blue-800 shadow-2xl">
+        <CardHeader className="text-center pb-8">
+          <div className="mx-auto mb-4 w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center shadow-lg">
             <MapPin className="w-8 h-8 text-white" />
           </div>
           <CardTitle className="text-2xl text-white">Canvasser Login</CardTitle>
           <p className="text-gray-400">Northern Pines Construction</p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <Label htmlFor="email" className="text-gray-300">Email</Label>
-              <div className="relative">
+              <Label htmlFor="email" className="text-gray-300 text-sm font-medium">Email Address</Label>
+              <div className="relative mt-2">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   id="email"
@@ -126,63 +122,79 @@ const CanvasserAuth = () => {
                     if (errors.email) setErrors({...errors, email: undefined});
                   }}
                   placeholder="Enter your email"
-                  className={`pl-10 bg-gray-800 border-blue-700 text-white placeholder-gray-400 ${
+                  className={`pl-10 bg-gray-800 border-blue-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     errors.email ? 'border-red-500' : ''
                   }`}
-                  disabled={loading}
+                  disabled={isLoading}
                 />
               </div>
               {errors.email && (
-                <div className="flex items-center mt-1 text-red-400 text-sm">
+                <div className="flex items-center mt-2 text-red-400 text-sm">
                   <AlertCircle className="w-4 h-4 mr-1" />
                   {errors.email}
                 </div>
               )}
             </div>
+            
             <div>
-              <Label htmlFor="password" className="text-gray-300">Password</Label>
-              <div className="relative">
+              <Label htmlFor="password" className="text-gray-300 text-sm font-medium">Password</Label>
+              <div className="relative mt-2">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
                     if (errors.password) setErrors({...errors, password: undefined});
                   }}
                   placeholder="Enter your password"
-                  className={`pl-10 bg-gray-800 border-blue-700 text-white placeholder-gray-400 ${
+                  className={`pl-10 pr-10 bg-gray-800 border-blue-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     errors.password ? 'border-red-500' : ''
                   }`}
-                  disabled={loading}
+                  disabled={isLoading}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
               {errors.password && (
-                <div className="flex items-center mt-1 text-red-400 text-sm">
+                <div className="flex items-center mt-2 text-red-400 text-sm">
                   <AlertCircle className="w-4 h-4 mr-1" />
                   {errors.password}
                 </div>
               )}
             </div>
+            
             <Button 
               type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-base font-medium transition-colors duration-200"
+              disabled={isLoading}
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Signing in...
+                </div>
+              ) : (
+                'Sign In'
+              )}
             </Button>
           </form>
           
-          <div className="mt-4 p-3 bg-gray-800 rounded text-sm text-gray-300 text-center">
+          <div className="mt-6 p-4 bg-gray-800 rounded-lg text-sm text-gray-300 text-center">
             Contact your administrator for login credentials.
           </div>
           
-          <div className="mt-4 text-center">
+          <div className="mt-6 text-center">
             <Button 
               variant="link" 
               onClick={() => navigate('/auth')}
-              className="text-blue-400 hover:text-blue-300"
+              className="text-blue-400 hover:text-blue-300 transition-colors duration-200"
             >
               ← Admin Login
             </Button>
