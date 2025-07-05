@@ -33,7 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isCanvasser, setIsCanvasser] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const initializeRef = useRef(false);
+  const initialized = useRef(false);
 
   const checkUserRole = useCallback(async (userId: string, userEmail?: string): Promise<{ isAdmin: boolean; isCanvasser: boolean }> => {
     try {
@@ -45,6 +45,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .select('id')
         .eq('user_id', userId)
         .maybeSingle();
+      
+      if (adminError && adminError.code !== 'PGRST116') {
+        console.error('Error checking admin status:', adminError);
+      }
       
       // Check canvasser status using email
       let canvasserData = null;
@@ -59,6 +63,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .maybeSingle();
         canvasserData = data;
         canvasserError = error;
+        
+        if (canvasserError && canvasserError.code !== 'PGRST116') {
+          console.error('Error checking canvasser status:', canvasserError);
+        }
       }
       
       const isAdminRole = !adminError && !!adminData;
@@ -76,8 +84,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshSession = useCallback(async () => {
     try {
       console.log('Refreshing session...');
-      setError(null);
-      
       const { data: { session }, error } = await supabase.auth.refreshSession();
       
       if (error) {
@@ -87,6 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(null);
         setIsAdmin(false);
         setIsCanvasser(false);
+        setIsLoading(false);
         return;
       }
       
@@ -97,25 +104,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { isAdmin: adminRole, isCanvasser: canvasserRole } = await checkUserRole(session.user.id, session.user.email);
         setIsAdmin(adminRole);
         setIsCanvasser(canvasserRole);
+        setError(null);
         
         console.log('Session refreshed successfully');
       }
+      setIsLoading(false);
     } catch (error) {
       console.error('Session refresh failed:', error);
       setError('Failed to refresh session');
+      setIsLoading(false);
     }
   }, [checkUserRole]);
 
   useEffect(() => {
-    // Prevent multiple initializations
-    if (initializeRef.current) {
+    if (initialized.current) {
       console.log('AuthProvider already initialized, skipping...');
       return;
     }
-    initializeRef.current = true;
+    initialized.current = true;
 
     let mounted = true;
-    let refreshTimer: NodeJS.Timeout;
 
     const initializeAuth = async () => {
       try {
@@ -143,21 +151,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const { isAdmin: adminRole, isCanvasser: canvasserRole } = await checkUserRole(session.user.id, session.user.email);
           setIsAdmin(adminRole);
           setIsCanvasser(canvasserRole);
-          
-          // Set up session refresh timer
-          const expiresAt = session.expires_at;
-          if (expiresAt) {
-            const timeUntilExpiry = (expiresAt * 1000) - Date.now();
-            const refreshTime = Math.max(timeUntilExpiry - 60000, 30000); // Refresh 1 minute before expiry, minimum 30 seconds
-            
-            refreshTimer = setTimeout(() => {
-              if (mounted) {
-                refreshSession();
-              }
-            }, refreshTime);
-          }
+          setError(null);
         } else {
           console.log('No initial session found');
+          if (mounted) {
+            setIsAdmin(false);
+            setIsCanvasser(false);
+          }
         }
         
         if (mounted) {
@@ -179,10 +179,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         console.log('Auth state changed:', event, session?.user?.email);
         
-        if (refreshTimer) {
-          clearTimeout(refreshTimer);
-        }
-        
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -193,19 +189,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setIsAdmin(adminRole);
               setIsCanvasser(canvasserRole);
               setError(null);
-              
-              // Set up new refresh timer
-              const expiresAt = session.expires_at;
-              if (expiresAt) {
-                const timeUntilExpiry = (expiresAt * 1000) - Date.now();
-                const refreshTime = Math.max(timeUntilExpiry - 60000, 30000);
-                
-                refreshTimer = setTimeout(() => {
-                  if (mounted) {
-                    refreshSession();
-                  }
-                }, refreshTime);
-              }
             }
           } catch (error) {
             console.error('Failed to check role after auth change:', error);
@@ -232,12 +215,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       mounted = false;
-      if (refreshTimer) {
-        clearTimeout(refreshTimer);
-      }
       subscription.unsubscribe();
     };
-  }, [checkUserRole, refreshSession]);
+  }, [checkUserRole]);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -254,6 +234,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         console.error('Sign in error:', error);
         setError(error.message);
+        setIsLoading(false);
         return { error };
       }
       
@@ -263,9 +244,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Sign in error:', error);
       const authError = error as AuthError;
       setError(authError.message);
-      return { error: authError };
-    } finally {
       setIsLoading(false);
+      return { error: authError };
     }
   };
 

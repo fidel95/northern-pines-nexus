@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { ErrorDisplay } from '@/components/ErrorDisplay';
 import { Button } from '@/components/ui/button';
-import { LogIn, LogOut, RefreshCw } from 'lucide-react';
+import { LogIn, LogOut } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -23,8 +23,18 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { user, isAdmin, isCanvasser, isLoading, error, signOut, refreshSession } = useAuth();
   const location = useLocation();
 
-  console.log('ProtectedRoute - Auth State:', { user: !!user, isAdmin, isCanvasser, isLoading, error });
+  console.log('ProtectedRoute - Auth State:', { 
+    user: !!user, 
+    isAdmin, 
+    isCanvasser, 
+    isLoading, 
+    error,
+    requireAdmin,
+    requireCanvasser,
+    requireAuth
+  });
 
+  // Show loading spinner while authentication is being checked
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -33,6 +43,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
+  // Show error if there's an authentication error
   if (error) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -44,17 +55,23 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
+  // Redirect to auth if user is required but not present
   if (requireAuth && !user) {
     console.log('ProtectedRoute - Redirecting to auth, no user found');
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
+  // Show access denied for admin-only areas
   if (requireAdmin && !isAdmin) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
           <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
           <p className="text-gray-400 mb-6">You need admin privileges to access this area.</p>
+          <div className="space-y-2 text-sm text-gray-500 mb-6">
+            <p>Current user: {user?.email || 'None'}</p>
+            <p>Admin status: {isAdmin ? 'Yes' : 'No'}</p>
+          </div>
           <div className="flex gap-4 justify-center">
             <Button 
               onClick={() => window.location.href = '/auth'}
@@ -77,12 +94,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
+  // Show access denied for canvasser-only areas
   if (requireCanvasser && !isCanvasser) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
           <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
           <p className="text-gray-400 mb-6">You need canvasser access to view this area.</p>
+          <div className="space-y-2 text-sm text-gray-500 mb-6">
+            <p>Current user: {user?.email || 'None'}</p>
+            <p>Canvasser status: {isCanvasser ? 'Yes' : 'No'}</p>
+          </div>
           <div className="flex gap-4 justify-center">
             <Button 
               onClick={() => window.location.href = '/canvasser-auth'}
@@ -105,5 +127,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
+  // All checks passed, render the protected content
   return <>{children}</>;
 };
