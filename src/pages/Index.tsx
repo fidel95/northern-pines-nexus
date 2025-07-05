@@ -12,7 +12,7 @@ import { Navigation } from "@/components/Navigation";
 import { ContentEditor } from "@/components/ContentEditor";
 import { Button } from "@/components/ui/button";
 import { Edit, Eye } from "lucide-react";
-import { useAuth } from "@/contexts/SupabaseAuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 
 interface ContentSection {

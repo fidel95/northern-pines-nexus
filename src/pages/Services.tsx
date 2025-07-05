@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { InlineEditor } from "@/components/InlineEditor";
-import { useAuth } from "@/contexts/SupabaseAuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Home, Building, Wrench, Paintbrush, Hammer, TreePine } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
