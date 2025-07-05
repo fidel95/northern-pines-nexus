@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CanvasserAuthProvider } from "@/contexts/CanvasserAuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Lazy load components for better performance
 const Index = lazy(() => import("./pages/Index"));
@@ -25,7 +26,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 10, // 10 minutes (renamed from cacheTime)
+      gcTime: 1000 * 60 * 10, // 10 minutes
       retry: 2,
       refetchOnWindowFocus: false,
     },
@@ -40,56 +41,58 @@ const AppLoadingFallback = () => (
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>
-          <CanvasserAuthProvider>
-            <BrowserRouter>
-              <div className="min-h-screen">
-                <Suspense fallback={<AppLoadingFallback />}>
-                  <Routes>
-                    {/* Public Routes */}
-                    <Route path="/" element={<Index />} />
-                    <Route path="/about-us" element={<AboutUs />} />
-                    <Route path="/contact-us" element={<ContactUs />} />
-                    <Route path="/services" element={<Services />} />
-                    <Route path="/projects" element={<Projects />} />
-                    
-                    {/* Auth Routes */}
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/canvasser-auth" element={<CanvasserAuth />} />
-                    
-                    {/* Protected Admin Routes */}
-                    <Route 
-                      path="/dashboard" 
-                      element={
-                        <ProtectedRoute requireAdmin>
-                          <Dashboard />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    
-                    {/* Protected Canvasser Routes */}
-                    <Route 
-                      path="/canvasser-dashboard" 
-                      element={
-                        <ProtectedRoute requireCanvasser>
-                          <CanvasserDashboard />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    
-                    {/* 404 Route */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
-                <Toaster />
-              </div>
-            </BrowserRouter>
-          </CanvasserAuthProvider>
-        </AuthProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <AuthProvider>
+            <CanvasserAuthProvider>
+              <BrowserRouter>
+                <div className="min-h-screen">
+                  <Suspense fallback={<AppLoadingFallback />}>
+                    <Routes>
+                      {/* Public Routes */}
+                      <Route path="/" element={<Index />} />
+                      <Route path="/about-us" element={<AboutUs />} />
+                      <Route path="/contact-us" element={<ContactUs />} />
+                      <Route path="/services" element={<Services />} />
+                      <Route path="/projects" element={<Projects />} />
+                      
+                      {/* Auth Routes */}
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/canvasser-auth" element={<CanvasserAuth />} />
+                      
+                      {/* Protected Admin Routes */}
+                      <Route 
+                        path="/dashboard" 
+                        element={
+                          <ProtectedRoute requireAdmin>
+                            <Dashboard />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      
+                      {/* Protected Canvasser Routes */}
+                      <Route 
+                        path="/canvasser-dashboard" 
+                        element={
+                          <ProtectedRoute requireCanvasser>
+                            <CanvasserDashboard />
+                          </ProtectedRoute>
+                        } 
+                      />
+                      
+                      {/* 404 Route */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
+                  <Toaster />
+                </div>
+              </BrowserRouter>
+            </CanvasserAuthProvider>
+          </AuthProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

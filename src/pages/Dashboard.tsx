@@ -14,7 +14,7 @@ import { TasksManager } from "@/components/TasksManager";
 import { CanvassersManager } from "@/components/CanvassersManager";
 import { CanvassingActivitiesManager } from "@/components/CanvassingActivitiesManager";
 import { Navigation } from "@/components/Navigation";
-import { useAuth } from "@/contexts/SupabaseAuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { FormSubmissionsManager } from "@/components/FormSubmissionsManager";
 import { toast } from "@/hooks/use-toast";

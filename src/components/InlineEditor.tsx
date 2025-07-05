@@ -1,52 +1,65 @@
 
-import React, { useState } from 'react';
-import { Check, X, Edit } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
-import { toast } from '@/hooks/use-toast';
+import React, { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Edit3, Check, X } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 interface InlineEditorProps {
   content: string;
-  onSave: (content: string) => Promise<boolean>;
-  multiline?: boolean;
+  onSave: (value: string) => Promise<boolean> | boolean;
   className?: string;
   placeholder?: string;
+  multiline?: boolean;
+  disabled?: boolean;
 }
 
-export const InlineEditor = ({ 
-  content, 
-  onSave, 
-  multiline = false, 
+export const InlineEditor: React.FC<InlineEditorProps> = ({
+  content,
+  onSave,
   className = "",
-  placeholder = "Click to edit..."
-}: InlineEditorProps) => {
-  const { isAdmin, user } = useAuth();
+  placeholder = "Click to edit...",
+  multiline = false,
+  disabled = false,
+}) => {
+  const { isAdmin } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState(content);
+  const [value, setValue] = useState(content);
   const [isSaving, setIsSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
-  // Update editContent when content prop changes
-  React.useEffect(() => {
-    setEditContent(content);
+  useEffect(() => {
+    setValue(content);
   }, [content]);
 
-  if (!isAdmin || !user) {
-    return <span className={className}>{content || placeholder}</span>;
-  }
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      if (inputRef.current instanceof HTMLTextAreaElement) {
+        inputRef.current.setSelectionRange(inputRef.current.value.length, inputRef.current.value.length);
+      } else {
+        inputRef.current.setSelectionRange(inputRef.current.value.length, inputRef.current.value.length);
+      }
+    }
+  }, [isEditing]);
+
+  const handleEdit = () => {
+    if (!isAdmin || disabled) return;
+    setIsEditing(true);
+  };
 
   const handleSave = async () => {
-    if (editContent.trim() === content.trim()) {
+    if (value.trim() === content.trim()) {
       setIsEditing(false);
       return;
     }
 
     setIsSaving(true);
     try {
-      const success = await onSave(editContent.trim());
-      
-      if (success) {
+      const result = await onSave(value.trim());
+      if (result !== false) {
         setIsEditing(false);
         toast({
           title: "Content Updated",
@@ -55,15 +68,15 @@ export const InlineEditor = ({
       } else {
         toast({
           title: "Save Failed",
-          description: "There was an error saving your changes. Please try again.",
+          description: "Failed to save your changes. Please try again.",
           variant: "destructive",
         });
       }
     } catch (error) {
-      console.error('Save error:', error);
+      console.error("Error saving content:", error);
       toast({
         title: "Save Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: "An error occurred while saving. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -72,80 +85,87 @@ export const InlineEditor = ({
   };
 
   const handleCancel = () => {
-    setEditContent(content);
+    setValue(content);
     setIsEditing(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
+    if (e.key === "Enter" && !multiline && !e.shiftKey) {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === "Escape") {
       handleCancel();
-    } else if (e.key === 'Enter' && !multiline && (e.ctrlKey || e.metaKey)) {
+    } else if (e.key === "Enter" && e.ctrlKey && multiline) {
+      e.preventDefault();
       handleSave();
     }
   };
 
+  if (!isAdmin) {
+    return (
+      <div className={className}>
+        {multiline ? (
+          <div className="whitespace-pre-wrap">{content}</div>
+        ) : (
+          <span>{content}</span>
+        )}
+      </div>
+    );
+  }
+
   if (isEditing) {
+    const InputComponent = multiline ? Textarea : Input;
+    
     return (
       <div className="relative group">
-        {multiline ? (
-          <Textarea
-            value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className={`${className} min-h-[100px] bg-white border-2 border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-            placeholder={placeholder}
-            autoFocus
-            disabled={isSaving}
-          />
-        ) : (
-          <Input
-            value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className={`${className} bg-white border-2 border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-            placeholder={placeholder}
-            autoFocus
-            disabled={isSaving}
-          />
-        )}
+        <InputComponent
+          ref={inputRef as any}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className={`${className} min-h-[40px] ${multiline ? 'min-h-[100px]' : ''}`}
+          placeholder={placeholder}
+          disabled={isSaving}
+        />
         <div className="flex gap-2 mt-2">
           <Button
             size="sm"
             onClick={handleSave}
             disabled={isSaving}
-            className="bg-green-600 hover:bg-green-700 disabled:opacity-50"
+            className="bg-green-600 hover:bg-green-700"
           >
-            <Check className="w-4 h-4" />
-            {isSaving ? 'Saving...' : 'Save'}
+            <Check className="w-3 h-3 mr-1" />
+            {isSaving ? "Saving..." : "Save"}
           </Button>
           <Button
             size="sm"
             variant="outline"
             onClick={handleCancel}
             disabled={isSaving}
-            className="disabled:opacity-50"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3 h-3 mr-1" />
             Cancel
           </Button>
         </div>
-        {!multiline && (
-          <div className="text-xs text-gray-500 mt-1">
-            Press Ctrl+Enter to save, Escape to cancel
-          </div>
-        )}
       </div>
     );
   }
 
   return (
     <div
-      className={`${className} group relative cursor-pointer hover:bg-blue-50 hover:bg-opacity-50 rounded p-2 transition-all duration-200 border border-transparent hover:border-blue-200`}
-      onClick={() => setIsEditing(true)}
-      title="Click to edit"
+      className={`${className} cursor-pointer relative group hover:bg-gray-50 hover:shadow-sm transition-all duration-200 ${
+        disabled ? 'cursor-not-allowed opacity-60' : ''
+      }`}
+      onClick={handleEdit}
     >
-      {content || <span className="text-gray-400 italic">{placeholder}</span>}
-      <Edit className="w-4 h-4 absolute top-2 right-2 opacity-0 group-hover:opacity-70 transition-opacity bg-white rounded p-0.5 shadow-sm" />
+      {multiline ? (
+        <div className="whitespace-pre-wrap">{content || placeholder}</div>
+      ) : (
+        <span>{content || placeholder}</span>
+      )}
+      {!disabled && (
+        <Edit3 className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute -right-6 top-1/2 transform -translate-y-1/2" />
+      )}
     </div>
   );
 };
