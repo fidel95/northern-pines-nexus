@@ -5,11 +5,10 @@ import { ModernServices } from "@/components/ModernServices";
 import { ModernTestimonials } from "@/components/ModernTestimonials";
 import { ModernGallery } from "@/components/ModernGallery";
 import { ModernContactForm } from "@/components/ModernContactForm";
-import { About } from "@/components/About";
-import { Projects } from "@/components/Projects";
 import { Footer } from "@/components/Footer";
 import { Navigation } from "@/components/Navigation";
 import { ContentEditor } from "@/components/ContentEditor";
+import { DebugInfo } from "@/components/DebugInfo";
 import { Button } from "@/components/ui/button";
 import { Edit, Eye } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,6 +29,8 @@ const Index = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [customSections, setCustomSections] = useState<ContentSection[]>([]);
   const [editLoading, setEditLoading] = useState(false);
+
+  console.log('Index page - Auth state:', { user: !!user, isAdmin, isLoading });
 
   // Load custom sections from localStorage
   useEffect(() => {
@@ -147,6 +148,9 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <Navigation />
+      
+      {/* Debug Info - only in development */}
+      <DebugInfo />
       
       {/* Admin Edit Controls - Only show if admin is logged in */}
       {!isLoading && user && isAdmin && (

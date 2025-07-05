@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -33,10 +33,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isCanvasser, setIsCanvasser] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const initializeRef = useRef(false);
 
-  const checkUserRole = useCallback(async (userId: string): Promise<{ isAdmin: boolean; isCanvasser: boolean }> => {
+  const checkUserRole = useCallback(async (userId: string, userEmail?: string): Promise<{ isAdmin: boolean; isCanvasser: boolean }> => {
     try {
-      console.log('Checking user role for:', userId);
+      console.log('Checking user role for:', userId, userEmail);
       
       // Check admin status
       const { data: adminData, error: adminError } = await supabase
@@ -45,29 +46,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('user_id', userId)
         .maybeSingle();
       
-      // Check canvasser status
-      const { data: canvasserData, error: canvasserError } = await supabase
-        .from('canvassers')
-        .select('id, active')
-        .eq('email', user?.email)
-        .eq('active', true)
-        .maybeSingle();
+      // Check canvasser status using email
+      let canvasserData = null;
+      let canvasserError = null;
+      
+      if (userEmail) {
+        const { data, error } = await supabase
+          .from('canvassers')
+          .select('id, active')
+          .eq('email', userEmail)
+          .eq('active', true)
+          .maybeSingle();
+        canvasserData = data;
+        canvasserError = error;
+      }
       
       const isAdminRole = !adminError && !!adminData;
       const isCanvasserRole = !canvasserError && !!canvasserData;
       
-      console.log('Role check results:', { isAdminRole, isCanvasserRole });
+      console.log('Role check results:', { isAdminRole, isCanvasserRole, adminData, canvasserData });
       
       return { isAdmin: isAdminRole, isCanvasser: isCanvasserRole };
     } catch (error) {
       console.error('Error checking user role:', error);
       return { isAdmin: false, isCanvasser: false };
     }
-  }, [user?.email]);
+  }, []);
 
   const refreshSession = useCallback(async () => {
     try {
       console.log('Refreshing session...');
+      setError(null);
+      
       const { data: { session }, error } = await supabase.auth.refreshSession();
       
       if (error) {
@@ -84,10 +94,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(session);
         setUser(session.user);
         
-        const { isAdmin: adminRole, isCanvasser: canvasserRole } = await checkUserRole(session.user.id);
+        const { isAdmin: adminRole, isCanvasser: canvasserRole } = await checkUserRole(session.user.id, session.user.email);
         setIsAdmin(adminRole);
         setIsCanvasser(canvasserRole);
-        setError(null);
         
         console.log('Session refreshed successfully');
       }
@@ -98,12 +107,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [checkUserRole]);
 
   useEffect(() => {
+    // Prevent multiple initializations
+    if (initializeRef.current) {
+      console.log('AuthProvider already initialized, skipping...');
+      return;
+    }
+    initializeRef.current = true;
+
     let mounted = true;
     let refreshTimer: NodeJS.Timeout;
 
     const initializeAuth = async () => {
       try {
         console.log('Initializing authentication...');
+        setIsLoading(true);
+        setError(null);
         
         // Get initial session
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -122,10 +140,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setSession(session);
           setUser(session.user);
           
-          const { isAdmin: adminRole, isCanvasser: canvasserRole } = await checkUserRole(session.user.id);
+          const { isAdmin: adminRole, isCanvasser: canvasserRole } = await checkUserRole(session.user.id, session.user.email);
           setIsAdmin(adminRole);
           setIsCanvasser(canvasserRole);
-          setError(null);
           
           // Set up session refresh timer
           const expiresAt = session.expires_at;
@@ -171,7 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (session?.user) {
           try {
-            const { isAdmin: adminRole, isCanvasser: canvasserRole } = await checkUserRole(session.user.id);
+            const { isAdmin: adminRole, isCanvasser: canvasserRole } = await checkUserRole(session.user.id, session.user.email);
             if (mounted) {
               setIsAdmin(adminRole);
               setIsCanvasser(canvasserRole);
@@ -205,7 +222,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
         
-        if (mounted) {
+        if (mounted && event !== 'TOKEN_REFRESHED') {
           setIsLoading(false);
         }
       }
@@ -227,16 +244,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(true);
       setError(null);
       
+      console.log('Attempting sign in for:', email);
+      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
       
       if (error) {
+        console.error('Sign in error:', error);
         setError(error.message);
         return { error };
       }
       
+      console.log('Sign in successful');
       return { error: null };
     } catch (error) {
       console.error('Sign in error:', error);
@@ -251,12 +272,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       setIsLoading(true);
+      console.log('Signing out...');
+      
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
       setIsAdmin(false);
       setIsCanvasser(false);
       setError(null);
+      
+      console.log('Sign out successful');
       
       toast({
         title: "Signed Out",
@@ -275,18 +300,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const contextValue = {
+    user,
+    session,
+    signIn,
+    signOut,
+    refreshSession,
+    isAdmin,
+    isCanvasser,
+    isLoading,
+    error
+  };
+
   return (
-    <AuthContext.Provider value={{
-      user,
-      session,
-      signIn,
-      signOut,
-      refreshSession,
-      isAdmin,
-      isCanvasser,
-      isLoading,
-      error
-    }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
