@@ -20,7 +20,7 @@ import { FormSubmissionsManager } from "@/components/FormSubmissionsManager";
 import { toast } from "@/hooks/use-toast";
 
 const Dashboard = () => {
-  const { user, signOut, isAdmin, isLoading } = useAuth();
+  const { user, signOut, isAdmin, isLoading, error } = useAuth();
   const navigate = useNavigate();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -75,19 +75,19 @@ const Dashboard = () => {
     );
   }
 
-  if (!user) {
+  if (error) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-4">Please Sign In</h1>
-          <p className="text-gray-400 mb-6">You need to be signed in to access the dashboard.</p>
+          <h1 className="text-2xl font-bold text-white mb-4">Dashboard Error</h1>
+          <p className="text-gray-400 mb-6">{error}</p>
           <div className="flex gap-4 justify-center">
             <Button 
               onClick={() => navigate('/auth')} 
               className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
             >
               <LogIn className="w-4 h-4" />
-              Sign In
+              Sign In Again
             </Button>
             <Button 
               onClick={handleLogout} 
@@ -103,12 +103,36 @@ const Dashboard = () => {
     );
   }
 
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-white mb-4">Please Sign In</h1>
+          <p className="text-gray-400 mb-6">You need to be signed in to access the dashboard.</p>
+          <div className="flex gap-4 justify-center">
+            <Button 
+              onClick={() => navigate('/auth')} 
+              className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+            >
+              <LogIn className="w-4 h-4" />
+              Sign In
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
           <p className="text-gray-400 mb-6">You need admin privileges to access this dashboard.</p>
+          <div className="space-y-2 text-sm text-gray-500 mb-6">
+            <p>Current user: {user.email}</p>
+            <p>Role: {isAdmin ? 'Admin' : 'User'}</p>
+          </div>
           <div className="flex gap-4 justify-center">
             <Button 
               onClick={() => navigate('/auth')} 

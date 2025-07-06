@@ -7,8 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const isDashboard = location.pathname === '/dashboard';
-  const { user, isAdmin, isCanvasser } = useAuth();
+  const isDashboard = location.pathname === '/dashboard' || location.pathname === '/canvasser-dashboard';
+  const { user, isAdmin, isCanvasser, isLoading } = useAuth();
 
   const navItems = [
     { name: "Home", href: "/", isExternal: false },
@@ -36,7 +36,8 @@ export const Navigation = () => {
   };
 
   // Only show dashboard link if user is authenticated and has appropriate role
-  const showDashboardLink = user && (isAdmin || isCanvasser);
+  // Don't show during loading to prevent flickering
+  const showDashboardLink = !isLoading && user && (isAdmin || isCanvasser);
 
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50">

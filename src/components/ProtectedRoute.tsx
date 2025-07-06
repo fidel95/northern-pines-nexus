@@ -34,7 +34,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     requireAuth
   });
 
-  // Show loading spinner while authentication is being checked
+  // Show loading spinner while authentication is being checked (max 15 seconds)
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
