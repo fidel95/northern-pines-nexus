@@ -47,17 +47,20 @@ export const CanvasserAuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         console.log('Canvasser auth state changed:', event, session?.user?.email);
         
-        // Set timeout to prevent endless loading
+        // Clear any existing timeout
         if (initTimeout) clearTimeout(initTimeout);
+        
+        // Set timeout to prevent endless loading
         initTimeout = setTimeout(() => {
           if (mounted) {
             console.log('Canvasser auth timeout, setting loading to false');
             setIsLoading(false);
           }
-        }, 10000);
+        }, 5000); // Reduced timeout to 5 seconds
         
         if (session?.user) {
           try {
+            console.log('Fetching canvasser data for email:', session.user.email);
             const { data, error } = await supabase
               .from('canvassers')
               .select('*')
@@ -65,23 +68,38 @@ export const CanvasserAuthProvider: React.FC<{ children: React.ReactNode }> = ({
               .eq('active', true)
               .maybeSingle();
             
-            if (!error && data && mounted) {
-              setCanvasser(data);
-              console.log('Canvasser data loaded:', data.name);
-            } else {
+            console.log('Canvasser query result:', { data, error });
+            
+            if (error) {
+              console.error('Database error fetching canvasser:', error);
               if (mounted) {
                 setCanvasser(null);
-                console.log('No canvasser data found for:', session.user.email);
+                setIsLoading(false);
+              }
+              return;
+            }
+            
+            if (data && mounted) {
+              setCanvasser(data);
+              console.log('Canvasser data loaded successfully:', data.name);
+            } else {
+              console.log('No active canvasser found for email:', session.user.email);
+              if (mounted) {
+                setCanvasser(null);
               }
             }
           } catch (error) {
-            console.error('Error fetching canvasser data:', error);
-            if (mounted) setCanvasser(null);
+            console.error('Exception fetching canvasser data:', error);
+            if (mounted) {
+              setCanvasser(null);
+            }
           }
         } else {
+          console.log('No session user, clearing canvasser data');
           if (mounted) setCanvasser(null);
         }
         
+        // Always clear loading state
         if (mounted) {
           clearTimeout(initTimeout);
           setIsLoading(false);
@@ -127,16 +145,25 @@ export const CanvasserAuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      console.log('Attempting canvasser sign in for:', email);
+      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
-      return { error };
+      
+      if (error) {
+        console.error('Canvasser auth error:', error);
+        setIsLoading(false); // Set loading to false on auth error
+        return { error };
+      }
+      
+      console.log('Canvasser auth successful, waiting for auth state change...');
+      return { error: null };
     } catch (error) {
-      console.error('Canvasser sign in error:', error);
+      console.error('Canvasser sign in exception:', error);
+      setIsLoading(false); // Set loading to false on exception
       return { error: error as AuthError };
-    } finally {
-      // Don't set loading to false here - let auth state change handle it
     }
   };
 
