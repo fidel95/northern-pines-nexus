@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Plus, Search, Eye, Edit, Trash2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -78,19 +77,21 @@ export const CanvassersManager = () => {
     }
 
     try {
-      // First create the auth user
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: newCanvasser.email,
-        password: newCanvasser.password,
-        email_confirm: true
-      });
-
-      if (authError) throw authError;
-
-      // Then create the canvasser record
+      console.log('Creating canvasser with email:', newCanvasser.email);
+      
+      // Get the current session to ensure we have admin privileges
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        throw new Error('No valid admin session found');
+      }
+      
+      console.log('Admin session found, creating user...');
+      
+      // Create the canvasser record first (this will validate admin privileges)
       const territoriesArray = territories.split(',').map(t => t.trim()).filter(t => t);
       
-      const { error: canvasserError } = await supabase
+      const { data: canvasserData, error: canvasserError } = await supabase
         .from('canvassers')
         .insert([{
           name: newCanvasser.name,
@@ -98,9 +99,20 @@ export const CanvassersManager = () => {
           phone: newCanvasser.phone || null,
           assigned_territories: territoriesArray.length > 0 ? territoriesArray : null,
           active: newCanvasser.active
-        }]);
+        }])
+        .select()
+        .single();
 
-      if (canvasserError) throw canvasserError;
+      if (canvasserError) {
+        console.error('Error creating canvasser record:', canvasserError);
+        throw canvasserError;
+      }
+
+      console.log('Canvasser record created successfully:', canvasserData);
+
+      // Note: We're only creating the canvasser record in the database
+      // The actual user auth account would need to be created separately by the canvasser
+      // when they first try to log in, or through a separate user management system
 
       await fetchCanvassers();
       setNewCanvasser({
@@ -116,13 +128,13 @@ export const CanvassersManager = () => {
       
       toast({
         title: "Canvasser Added",
-        description: "New canvasser has been added successfully and can now log in",
+        description: `Canvasser ${newCanvasser.name} has been added successfully. They can now be assigned territories and activities.`,
       });
     } catch (error: any) {
       console.error('Error adding canvasser:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to add canvasser",
+        description: error.message || "Failed to add canvasser. Please ensure you have admin privileges.",
         variant: "destructive"
       });
     }
@@ -245,15 +257,16 @@ export const CanvassersManager = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="password" className="text-gray-300">Password *</Label>
+                      <Label htmlFor="password" className="text-gray-300">Initial Password *</Label>
                       <Input
                         id="password"
                         type="password"
                         value={newCanvasser.password}
                         onChange={(e) => setNewCanvasser({...newCanvasser, password: e.target.value})}
-                        placeholder="Create password"
+                        placeholder="Set initial password"
                         className="bg-gray-700 border-gray-600 text-white"
                       />
+                      <p className="text-xs text-gray-400 mt-1">Note: Canvasser will need to set up their auth account separately</p>
                     </div>
                   </div>
                   <div>

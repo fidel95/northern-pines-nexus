@@ -2,11 +2,13 @@
 import { useState } from "react";
 import { Menu, X, Phone, Mail } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const isDashboard = location.pathname === '/dashboard';
+  const { user, isAdmin, isCanvasser } = useAuth();
 
   const navItems = [
     { name: "Home", href: "/", isExternal: false },
@@ -33,6 +35,9 @@ export const Navigation = () => {
     );
   };
 
+  // Only show dashboard link if user is authenticated and has appropriate role
+  const showDashboardLink = user && (isAdmin || isCanvasser);
+
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -54,12 +59,14 @@ export const Navigation = () => {
                   Back to Website
                 </Link>
               )}
-              <Link
-                to="/dashboard"
-                className="bg-green-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors duration-200"
-              >
-                {isDashboard ? "Dashboard" : "Admin Dashboard"}
-              </Link>
+              {showDashboardLink && (
+                <Link
+                  to={isAdmin ? "/dashboard" : "/canvasser-dashboard"}
+                  className="bg-green-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors duration-200"
+                >
+                  {isDashboard ? "Dashboard" : isAdmin ? "Admin Dashboard" : "Canvasser Dashboard"}
+                </Link>
+              )}
             </div>
           </div>
           
@@ -99,13 +106,15 @@ export const Navigation = () => {
                 Back to Website
               </Link>
             )}
-            <Link
-              to="/dashboard"
-              className="bg-green-800 text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-green-700 w-full text-center"
-              onClick={() => setIsOpen(false)}
-            >
-              {isDashboard ? "Dashboard" : "Admin Dashboard"}
-            </Link>
+            {showDashboardLink && (
+              <Link
+                to={isAdmin ? "/dashboard" : "/canvasser-dashboard"}
+                className="bg-green-800 text-white block px-3 py-2 rounded-md text-base font-medium hover:bg-green-700 w-full text-center"
+                onClick={() => setIsOpen(false)}
+              >
+                {isDashboard ? "Dashboard" : isAdmin ? "Admin Dashboard" : "Canvasser Dashboard"}
+              </Link>
+            )}
             <div className="pt-4 pb-2 border-t border-gray-200 mt-4">
               <div className="flex items-center justify-center space-x-6 text-sm text-gray-600">
                 <div className="flex items-center">
