@@ -37,35 +37,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Checking user role for:', userId, userEmail);
       
-      // Use a timeout to prevent indefinite hanging
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Role check timeout')), 10000)
-      );
-      
-      // Check admin status with timeout
-      const adminPromise = supabase
+      // Check admin status
+      const { data: adminData, error: adminError } = await supabase
         .from('admins')
         .select('id')
         .eq('user_id', userId)
         .maybeSingle();
       
-      let canvasserPromise = Promise.resolve({ data: null, error: null });
+      // Check canvasser status
+      let canvasserData = null;
+      let canvasserError = null;
+      
       if (userEmail) {
-        canvasserPromise = supabase
+        const result = await supabase
           .from('canvassers')
           .select('id, active')
           .eq('email', userEmail)
           .eq('active', true)
           .maybeSingle();
+        
+        canvasserData = result.data;
+        canvasserError = result.error;
       }
-      
-      const [adminResult, canvasserResult] = await Promise.race([
-        Promise.all([adminPromise, canvasserPromise]),
-        timeoutPromise
-      ]) as [any, any];
-      
-      const { data: adminData, error: adminError } = adminResult;
-      const { data: canvasserData, error: canvasserError } = canvasserResult;
       
       if (adminError && adminError.code !== 'PGRST116') {
         console.error('Error checking admin status:', adminError);
