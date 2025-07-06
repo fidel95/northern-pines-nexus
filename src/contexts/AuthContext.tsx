@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -33,9 +33,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isCanvasser, setIsCanvasser] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const initialized = useRef(false);
 
-  const checkUserRole = useCallback(async (userId: string, userEmail?: string): Promise<{ isAdmin: boolean; isCanvasser: boolean }> => {
+  const checkUserRole = useCallback(async (userId: string, userEmail?: string) => {
     try {
       console.log('Checking user role for:', userId, userEmail);
       
@@ -46,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('user_id', userId)
         .maybeSingle();
       
-      if (adminError && adminError.code !== 'PGRST116') {
+      if (adminError) {
         console.error('Error checking admin status:', adminError);
       }
       
@@ -64,7 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         canvasserData = data;
         canvasserError = error;
         
-        if (canvasserError && canvasserError.code !== 'PGRST116') {
+        if (canvasserError) {
           console.error('Error checking canvasser status:', canvasserError);
         }
       }
@@ -84,6 +83,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshSession = useCallback(async () => {
     try {
       console.log('Refreshing session...');
+      setIsLoading(true);
+      
       const { data: { session }, error } = await supabase.auth.refreshSession();
       
       if (error) {
@@ -93,7 +94,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(null);
         setIsAdmin(false);
         setIsCanvasser(false);
-        setIsLoading(false);
         return;
       }
       
@@ -108,21 +108,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         console.log('Session refreshed successfully');
       }
-      setIsLoading(false);
     } catch (error) {
       console.error('Session refresh failed:', error);
       setError('Failed to refresh session');
+    } finally {
       setIsLoading(false);
     }
   }, [checkUserRole]);
 
   useEffect(() => {
-    if (initialized.current) {
-      console.log('AuthProvider already initialized, skipping...');
-      return;
-    }
-    initialized.current = true;
-
     let mounted = true;
 
     const initializeAuth = async () => {
@@ -149,9 +143,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(session.user);
           
           const { isAdmin: adminRole, isCanvasser: canvasserRole } = await checkUserRole(session.user.id, session.user.email);
-          setIsAdmin(adminRole);
-          setIsCanvasser(canvasserRole);
-          setError(null);
+          if (mounted) {
+            setIsAdmin(adminRole);
+            setIsCanvasser(canvasserRole);
+            setError(null);
+          }
         } else {
           console.log('No initial session found');
           if (mounted) {
@@ -179,6 +175,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         console.log('Auth state changed:', event, session?.user?.email);
         
+        if (event === 'TOKEN_REFRESHED') {
+          // Don't change loading state for token refresh
+          return;
+        }
+        
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -205,7 +206,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
         
-        if (mounted && event !== 'TOKEN_REFRESHED') {
+        if (mounted) {
           setIsLoading(false);
         }
       }
