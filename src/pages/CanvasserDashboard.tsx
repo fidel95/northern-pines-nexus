@@ -7,6 +7,8 @@ import { useCanvasserAuth } from "@/contexts/CanvasserAuthContext";
 import { TimeTracker } from "@/components/canvasser/TimeTracker";
 import { DailySchedule } from "@/components/canvasser/DailySchedule";
 import { ActivityLogger } from "@/components/canvasser/ActivityLogger";
+import { TimeTracking } from "@/components/canvasser/TimeTracking";
+import { LeadEntry } from "@/components/canvasser/LeadEntry";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
@@ -151,36 +153,45 @@ const CanvasserDashboard = () => {
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="time" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-gray-900 border-blue-800">
+        <Tabs defaultValue="clock" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4 bg-gray-900 border-blue-800">
             <TabsTrigger 
-              value="time" 
+              value="clock" 
               className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"
             >
               <Clock className="w-4 h-4" />
-              <span className="hidden sm:inline">Time Tracking</span>
-              <span className="sm:hidden">Time</span>
+              <span className="hidden sm:inline">Clock</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="leads" 
+              className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"
+            >
+              <MapPin className="w-4 h-4" />
+              <span className="hidden sm:inline">Add Lead</span>
+              <span className="sm:hidden">Leads</span>
             </TabsTrigger>
             <TabsTrigger 
               value="schedule" 
               className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"
             >
               <Calendar className="w-4 h-4" />
-              <span className="hidden sm:inline">Daily Schedule</span>
-              <span className="sm:hidden">Schedule</span>
+              <span className="hidden sm:inline">Schedule</span>
             </TabsTrigger>
             <TabsTrigger 
               value="activity" 
               className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"
             >
-              <MapPin className="w-4 h-4" />
-              <span className="hidden sm:inline">Log Activity</span>
-              <span className="sm:hidden">Activity</span>
+              <User className="w-4 h-4" />
+              <span className="hidden sm:inline">Activity</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="time">
-            <TimeTracker />
+          <TabsContent value="clock">
+            <TimeTracking />
+          </TabsContent>
+
+          <TabsContent value="leads">
+            <LeadEntry />
           </TabsContent>
 
           <TabsContent value="schedule">

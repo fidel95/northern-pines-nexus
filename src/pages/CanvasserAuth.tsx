@@ -24,9 +24,10 @@ const CanvasserAuth = () => {
 
   useEffect(() => {
     if (!authLoading && canvasser) {
-      navigate(from, { replace: true });
+      console.log('Canvasser authenticated, redirecting to dashboard');
+      navigate('/canvasser-dashboard', { replace: true });
     }
-  }, [canvasser, authLoading, navigate, from]);
+  }, [canvasser, authLoading, navigate]);
 
   const validateForm = () => {
     const newErrors: {email?: string, password?: string} = {};
@@ -86,8 +87,9 @@ const CanvasserAuth = () => {
     if (result) {
       toast({
         title: "Login Successful",
-        description: "Welcome back! Loading your dashboard...",
+        description: "Welcome back! Redirecting to your dashboard...",
       });
+      // Navigation will be handled by useEffect when canvasser state updates
     } else if (error) {
       toast({
         title: "Login Failed",
