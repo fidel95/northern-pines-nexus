@@ -50,28 +50,19 @@ export const CanvasserAuthProvider: React.FC<{ children: React.ReactNode }> = ({
         // Clear any existing timeout
         if (initTimeout) clearTimeout(initTimeout);
         
-        // Set timeout to prevent endless loading
-        initTimeout = setTimeout(() => {
-          if (mounted) {
-            console.log('Canvasser auth timeout, setting loading to false');
-            setIsLoading(false);
-          }
-        }, 5000); // Reduced timeout to 5 seconds
-        
         if (session?.user) {
           try {
             console.log('Fetching canvasser data for email:', session.user.email);
-            const { data, error } = await supabase
+            
+            const { data: directData, error: directError } = await supabase
               .from('canvassers')
               .select('*')
               .eq('email', session.user.email)
               .eq('active', true)
-              .maybeSingle();
+              .limit(1);
             
-            console.log('Canvasser query result:', { data, error });
-            
-            if (error) {
-              console.error('Database error fetching canvasser:', error);
+            if (directError) {
+              console.error('Direct query failed:', directError);
               if (mounted) {
                 setCanvasser(null);
                 setIsLoading(false);
@@ -79,20 +70,17 @@ export const CanvasserAuthProvider: React.FC<{ children: React.ReactNode }> = ({
               return;
             }
             
-            if (data && mounted) {
-              setCanvasser(data);
-              console.log('Canvasser data loaded successfully:', data.name);
+            if (directData && directData.length > 0 && mounted) {
+              setCanvasser(directData[0]);
+              console.log('Canvasser data loaded successfully:', directData[0].name);
             } else {
-              console.log('No active canvasser found for email:', session.user.email);
-              if (mounted) {
-                setCanvasser(null);
-              }
+              console.log('No canvasser found for email:', session.user.email);
+              if (mounted) setCanvasser(null);
             }
+            
           } catch (error) {
             console.error('Exception fetching canvasser data:', error);
-            if (mounted) {
-              setCanvasser(null);
-            }
+            if (mounted) setCanvasser(null);
           }
         } else {
           console.log('No session user, clearing canvasser data');
@@ -101,7 +89,6 @@ export const CanvasserAuthProvider: React.FC<{ children: React.ReactNode }> = ({
         
         // Always clear loading state
         if (mounted) {
-          clearTimeout(initTimeout);
           setIsLoading(false);
         }
       }
@@ -111,23 +98,26 @@ export const CanvasserAuthProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user && mounted) {
-          const { data, error } = await supabase
+          setIsLoading(true);
+          
+          const { data: directData, error: directError } = await supabase
             .from('canvassers')
             .select('*')
             .eq('email', session.user.email)
             .eq('active', true)
-            .maybeSingle();
+            .limit(1);
           
-          if (!error && data) {
-            setCanvasser(data);
-            console.log('Initial canvasser session loaded:', data.name);
+          if (!directError && directData && directData.length > 0) {
+            setCanvasser(directData[0]);
+            console.log('Initial canvasser session loaded:', directData[0].name);
+          } else {
+            console.log('No canvasser found in initial session check');
           }
         }
       } catch (error) {
         console.error('Error checking canvasser session:', error);
       } finally {
         if (mounted) {
-          if (initTimeout) clearTimeout(initTimeout);
           setIsLoading(false);
         }
       }
