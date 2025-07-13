@@ -8,10 +8,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MapPin, User, Phone, Mail, FileText } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useCanvasserAuth } from "@/contexts/CanvasserAuthContext";
+interface Canvasser {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  assigned_territories: string[] | null;
+  hire_date: string;
+  active: boolean;
+  total_visits: number;
+  leads_generated: number;
+  conversion_rate: number;
+}
 
-export const LeadEntry = () => {
-  const { canvasser } = useCanvasserAuth();
+interface LeadEntryProps {
+  canvasser: Canvasser | null;
+}
+
+export const LeadEntry = ({ canvasser }: LeadEntryProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     address: "",

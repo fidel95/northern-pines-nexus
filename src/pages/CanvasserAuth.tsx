@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useCanvasserAuth } from "@/contexts/CanvasserAuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { MapPin, Mail, Lock, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -15,7 +15,7 @@ const CanvasserAuth = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{email?: string, password?: string}>({});
-  const { signIn, canvasser, isLoading: authLoading } = useCanvasserAuth();
+  const { signIn, isCanvasser, isLoading: authLoading, user } = useAuth();
   const { isLoading, error, withLoading } = useLoadingState();
   const navigate = useNavigate();
   const location = useLocation();
@@ -23,11 +23,11 @@ const CanvasserAuth = () => {
   const from = location.state?.from?.pathname || '/canvasser-dashboard';
 
   useEffect(() => {
-    if (!authLoading && canvasser) {
+    if (!authLoading && user && isCanvasser) {
       console.log('Canvasser authenticated, redirecting to dashboard');
       navigate('/canvasser-dashboard', { replace: true });
     }
-  }, [canvasser, authLoading, navigate]);
+  }, [user, isCanvasser, authLoading, navigate]);
 
   const validateForm = () => {
     const newErrors: {email?: string, password?: string} = {};

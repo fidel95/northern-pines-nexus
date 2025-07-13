@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { CanvasserAuthProvider } from "@/contexts/CanvasserAuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -47,8 +46,7 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <AuthProvider>
-            <CanvasserAuthProvider>
-              <BrowserRouter>
+            <BrowserRouter>
                 <div className="min-h-screen">
                   <Suspense fallback={<AppLoadingFallback />}>
                     <Routes>
@@ -89,8 +87,7 @@ function App() {
                   </Suspense>
                   <Toaster />
                 </div>
-              </BrowserRouter>
-            </CanvasserAuthProvider>
+            </BrowserRouter>
           </AuthProvider>
         </TooltipProvider>
       </QueryClientProvider>

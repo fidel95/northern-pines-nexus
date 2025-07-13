@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogOut, User, Clock, Calendar, MapPin, RefreshCw, LogIn } from "lucide-react";
-import { useCanvasserAuth } from "@/contexts/CanvasserAuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { TimeTracker } from "@/components/canvasser/TimeTracker";
 import { DailySchedule } from "@/components/canvasser/DailySchedule";
 import { ActivityLogger } from "@/components/canvasser/ActivityLogger";
@@ -12,17 +12,67 @@ import { LeadEntry } from "@/components/canvasser/LeadEntry";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Canvasser {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  assigned_territories: string[] | null;
+  hire_date: string;
+  active: boolean;
+  total_visits: number;
+  leads_generated: number;
+  conversion_rate: number;
+}
 
 const CanvasserDashboard = () => {
-  const { canvasser, signOut, isLoading } = useCanvasserAuth();
+  const { user, signOut, isLoading, isCanvasser } = useAuth();
   const navigate = useNavigate();
   const [refreshing, setRefreshing] = useState(false);
+  const [canvasser, setCanvasser] = useState<Canvasser | null>(null);
+  const [canvasserLoading, setCanvasserLoading] = useState(true);
 
   useEffect(() => {
-    if (!isLoading && !canvasser) {
+    if (!isLoading && (!user || !isCanvasser)) {
       navigate('/canvasser-auth');
     }
-  }, [canvasser, isLoading, navigate]);
+  }, [user, isCanvasser, isLoading, navigate]);
+
+  useEffect(() => {
+    const fetchCanvasserData = async () => {
+      if (!user?.email || !isCanvasser) return;
+      
+      try {
+        setCanvasserLoading(true);
+        const { data, error } = await supabase
+          .from('canvassers')
+          .select('*')
+          .eq('email', user.email)
+          .eq('active', true)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching canvasser data:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load canvasser data.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        setCanvasser(data);
+      } catch (error) {
+        console.error('Exception fetching canvasser data:', error);
+      } finally {
+        setCanvasserLoading(false);
+      }
+    };
+    
+    fetchCanvasserData();
+  }, [user, isCanvasser]);
 
   const handleLogout = async () => {
     try {
@@ -58,7 +108,7 @@ const CanvasserDashboard = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || canvasserLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
@@ -69,7 +119,7 @@ const CanvasserDashboard = () => {
     );
   }
 
-  if (!canvasser) {
+  if (!user || !isCanvasser || !canvasser) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
@@ -191,7 +241,7 @@ const CanvasserDashboard = () => {
           </TabsContent>
 
           <TabsContent value="leads">
-            <LeadEntry />
+            <LeadEntry canvasser={canvasser} />
           </TabsContent>
 
           <TabsContent value="schedule">
