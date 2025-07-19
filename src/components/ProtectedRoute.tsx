@@ -34,7 +34,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     requireAuth
   });
 
-  // Show loading spinner while authentication is being checked (max 15 seconds)
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -43,7 +42,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Show error if there's an authentication error
   if (error) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -55,13 +53,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Redirect to auth if user is required but not present
   if (requireAuth && !user) {
     console.log('ProtectedRoute - Redirecting to auth, no user found');
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // Show access denied for admin-only areas
   if (requireAdmin && !isAdmin) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -94,7 +90,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Show access denied for canvasser-only areas
   if (requireCanvasser && !isCanvasser) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -127,6 +122,5 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // All checks passed, render the protected content
   return <>{children}</>;
 };

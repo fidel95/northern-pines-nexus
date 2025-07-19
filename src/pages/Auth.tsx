@@ -24,9 +24,10 @@ const Auth = () => {
 
   useEffect(() => {
     if (!authLoading && user && isAdmin) {
-      navigate(from, { replace: true });
+      console.log('Admin authenticated, redirecting to dashboard');
+      navigate('/dashboard', { replace: true });
     }
-  }, [user, isAdmin, authLoading, navigate, from]);
+  }, [user, isAdmin, authLoading, navigate]);
 
   const validateForm = () => {
     const newErrors: {email?: string, password?: string} = {};
@@ -49,7 +50,7 @@ const Auth = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <div className="text-xl text-white mb-4">Loading...</div>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -98,10 +99,10 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
-      <Card className="w-full max-w-md bg-gray-800 border-gray-700 shadow-2xl">
+    <div className="min-h-screen bg-black flex items-center justify-center px-4">
+      <Card className="w-full max-w-md bg-gray-900 border-gray-700 shadow-2xl">
         <CardHeader className="text-center pb-8">
-          <div className="mx-auto mb-4 w-16 h-16 bg-black rounded-full flex items-center justify-center shadow-lg">
+          <div className="mx-auto mb-4 w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center shadow-lg">
             <Lock className="w-8 h-8 text-white" />
           </div>
           <CardTitle className="text-2xl text-white">Admin Login</CardTitle>
@@ -122,7 +123,7 @@ const Auth = () => {
                     if (errors.email) setErrors({...errors, email: undefined});
                   }}
                   placeholder="Enter your email"
-                  className={`pl-10 bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`pl-10 bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     errors.email ? 'border-red-500' : ''
                   }`}
                   disabled={isLoading}
@@ -149,7 +150,7 @@ const Auth = () => {
                     if (errors.password) setErrors({...errors, password: undefined});
                   }}
                   placeholder="Enter your password"
-                  className={`pl-10 pr-10 bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`pl-10 pr-10 bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     errors.password ? 'border-red-500' : ''
                   }`}
                   disabled={isLoading}
@@ -172,7 +173,7 @@ const Auth = () => {
             
             <Button 
               type="submit" 
-              className="w-full bg-black hover:bg-gray-800 text-white py-3 text-base font-medium transition-colors duration-200"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-base font-medium transition-colors duration-200"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -186,7 +187,7 @@ const Auth = () => {
             </Button>
           </form>
           
-          <div className="mt-6 p-4 bg-gray-700 rounded-lg text-sm text-gray-300">
+          <div className="mt-6 p-4 bg-gray-800 rounded-lg text-sm text-gray-300">
             <strong className="text-white">Default Admin:</strong><br />
             Email: admin@admin.com<br />
             Password: admin

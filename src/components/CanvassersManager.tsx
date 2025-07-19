@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Plus, Search, Eye, Edit, Trash2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,7 +35,6 @@ export const CanvassersManager = () => {
     name: '',
     email: '',
     phone: '',
-    password: '',
     assigned_territories: [] as string[],
     active: true
   });
@@ -43,12 +42,18 @@ export const CanvassersManager = () => {
 
   const fetchCanvassers = async () => {
     try {
+      console.log('Fetching canvassers...');
       const { data, error } = await supabase
         .from('canvassers')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching canvassers:', error);
+        throw error;
+      }
+      
+      console.log('Canvassers fetched successfully:', data?.length || 0);
       setCanvassers(data || []);
     } catch (error) {
       console.error('Error fetching canvassers:', error);
@@ -67,28 +72,18 @@ export const CanvassersManager = () => {
   }, []);
 
   const addCanvasser = async () => {
-    if (!newCanvasser.name || !newCanvasser.email || !newCanvasser.password) {
+    if (!newCanvasser.name || !newCanvasser.email) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields (Name, Email, Password)",
+        description: "Please fill in all required fields (Name and Email)",
         variant: "destructive"
       });
       return;
     }
 
     try {
-      console.log('Creating canvasser with email:', newCanvasser.email);
+      console.log('Creating canvasser:', newCanvasser.email);
       
-      // Get the current session to ensure we have admin privileges
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        throw new Error('No valid admin session found');
-      }
-      
-      console.log('Admin session found, creating user...');
-      
-      // Create the canvasser record first (this will validate admin privileges)
       const territoriesArray = territories.split(',').map(t => t.trim()).filter(t => t);
       
       const { data: canvasserData, error: canvasserError } = await supabase
@@ -110,16 +105,11 @@ export const CanvassersManager = () => {
 
       console.log('Canvasser record created successfully:', canvasserData);
 
-      // Note: We're only creating the canvasser record in the database
-      // The actual user auth account would need to be created separately by the canvasser
-      // when they first try to log in, or through a separate user management system
-
       await fetchCanvassers();
       setNewCanvasser({
         name: '',
         email: '',
         phone: '',
-        password: '',
         assigned_territories: [],
         active: true
       });
@@ -128,13 +118,13 @@ export const CanvassersManager = () => {
       
       toast({
         title: "Canvasser Added",
-        description: `Canvasser ${newCanvasser.name} has been added successfully. They can now be assigned territories and activities.`,
+        description: `Canvasser ${newCanvasser.name} has been added successfully.`,
       });
     } catch (error: any) {
       console.error('Error adding canvasser:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to add canvasser. Please ensure you have admin privileges.",
+        description: error.message || "Failed to add canvasser",
         variant: "destructive"
       });
     }
@@ -206,7 +196,7 @@ export const CanvassersManager = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-gray-800 border-gray-700">
+      <Card className="bg-gray-900 border-gray-700">
         <CardHeader>
           <CardTitle className="flex items-center justify-between text-white">
             Canvasser Management
@@ -217,7 +207,7 @@ export const CanvassersManager = () => {
                   Add Canvasser
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px] bg-gray-800 border-gray-700">
+              <DialogContent className="sm:max-w-[500px] bg-gray-900 border-gray-700">
                 <DialogHeader>
                   <DialogTitle className="text-white">Add New Canvasser</DialogTitle>
                 </DialogHeader>
@@ -230,7 +220,7 @@ export const CanvassersManager = () => {
                         value={newCanvasser.name}
                         onChange={(e) => setNewCanvasser({...newCanvasser, name: e.target.value})}
                         placeholder="Enter full name"
-                        className="bg-gray-700 border-gray-600 text-white"
+                        className="bg-gray-800 border-gray-600 text-white"
                       />
                     </div>
                     <div>
@@ -241,33 +231,19 @@ export const CanvassersManager = () => {
                         value={newCanvasser.email}
                         onChange={(e) => setNewCanvasser({...newCanvasser, email: e.target.value})}
                         placeholder="Enter email"
-                        className="bg-gray-700 border-gray-600 text-white"
+                        className="bg-gray-800 border-gray-600 text-white"
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="phone" className="text-gray-300">Phone</Label>
-                      <Input
-                        id="phone"
-                        value={newCanvasser.phone}
-                        onChange={(e) => setNewCanvasser({...newCanvasser, phone: e.target.value})}
-                        placeholder="Enter phone number"
-                        className="bg-gray-700 border-gray-600 text-white"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="password" className="text-gray-300">Initial Password *</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        value={newCanvasser.password}
-                        onChange={(e) => setNewCanvasser({...newCanvasser, password: e.target.value})}
-                        placeholder="Set initial password"
-                        className="bg-gray-700 border-gray-600 text-white"
-                      />
-                      <p className="text-xs text-gray-400 mt-1">Note: Canvasser will need to set up their auth account separately</p>
-                    </div>
+                  <div>
+                    <Label htmlFor="phone" className="text-gray-300">Phone</Label>
+                    <Input
+                      id="phone"
+                      value={newCanvasser.phone}
+                      onChange={(e) => setNewCanvasser({...newCanvasser, phone: e.target.value})}
+                      placeholder="Enter phone number"
+                      className="bg-gray-800 border-gray-600 text-white"
+                    />
                   </div>
                   <div>
                     <Label htmlFor="territories" className="text-gray-300">Assigned Territories</Label>
@@ -276,7 +252,7 @@ export const CanvassersManager = () => {
                       value={territories}
                       onChange={(e) => setTerritories(e.target.value)}
                       placeholder="Enter territories separated by commas"
-                      className="bg-gray-700 border-gray-600 text-white"
+                      className="bg-gray-800 border-gray-600 text-white"
                     />
                     <p className="text-xs text-gray-400 mt-1">e.g., Downtown, North Side, East District</p>
                   </div>
@@ -309,14 +285,14 @@ export const CanvassersManager = () => {
                 placeholder="Search canvassers..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-gray-700 border-gray-600 text-white"
+                className="pl-10 bg-gray-800 border-gray-600 text-white"
               />
             </div>
           </div>
 
           <div className="space-y-4">
             {filteredCanvassers.map((canvasser) => (
-              <div key={canvasser.id} className="border border-gray-600 rounded-lg p-4 bg-gray-700">
+              <div key={canvasser.id} className="border border-gray-600 rounded-lg p-4 bg-gray-800">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
@@ -343,17 +319,17 @@ export const CanvassersManager = () => {
                   </div>
                   <div className="flex flex-col gap-2 ml-4">
                     <div className="flex gap-1">
-                      <Button variant="outline" size="sm" className="text-gray-300 border-gray-600 hover:bg-gray-600">
+                      <Button variant="outline" size="sm" className="text-gray-300 border-gray-600 hover:bg-gray-700">
                         <Eye className="w-4 h-4" />
                       </Button>
-                      <Button variant="outline" size="sm" className="text-gray-300 border-gray-600 hover:bg-gray-600">
+                      <Button variant="outline" size="sm" className="text-gray-300 border-gray-600 hover:bg-gray-700">
                         <Edit className="w-4 h-4" />
                       </Button>
                       <Button 
                         variant="outline" 
                         size="sm" 
                         onClick={() => deleteCanvasser(canvasser.id)}
-                        className="text-red-400 hover:text-red-300 border-gray-600 hover:bg-gray-600"
+                        className="text-red-400 hover:text-red-300 border-gray-600 hover:bg-gray-700"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

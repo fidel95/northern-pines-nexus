@@ -38,42 +38,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Checking user role for:', userId, userEmail);
       
-      // Check admin status
+      // Check admin status first (higher priority)
       const { data: adminData, error: adminError } = await supabase
         .from('admins')
         .select('id')
         .eq('user_id', userId)
         .maybeSingle();
       
-      // Check canvasser status
-      let canvasserData = null;
-      let canvasserError = null;
+      if (adminError && adminError.code !== 'PGRST116') {
+        console.error('Error checking admin status:', adminError);
+      }
       
-      if (userEmail) {
-        const result = await supabase
+      const isAdminRole = !adminError && !!adminData;
+      
+      // Only check canvasser if not admin (role priority)
+      let isCanvasserRole = false;
+      if (!isAdminRole && userEmail) {
+        const { data: canvasserData, error: canvasserError } = await supabase
           .from('canvassers')
           .select('id, active')
           .eq('email', userEmail)
           .eq('active', true)
           .maybeSingle();
         
-        canvasserData = result.data;
-        canvasserError = result.error;
+        if (canvasserError && canvasserError.code !== 'PGRST116') {
+          console.error('Error checking canvasser status:', canvasserError);
+        }
+        
+        isCanvasserRole = !canvasserError && !!canvasserData;
       }
       
-      if (adminError && adminError.code !== 'PGRST116') {
-        console.error('Error checking admin status:', adminError);
-      }
-      
-      if (canvasserError && canvasserError.code !== 'PGRST116') {
-        console.error('Error checking canvasser status:', canvasserError);
-      }
-      
-      const isAdminRole = !adminError && !!adminData;
-      const isCanvasserRole = !canvasserError && !!canvasserData;
-      
-      console.log('Role check results:', { isAdminRole, isCanvasserRole, adminData, canvasserData });
-      
+      console.log('Role check results:', { isAdminRole, isCanvasserRole });
       return { isAdmin: isAdminRole, isCanvasser: isCanvasserRole };
     } catch (error) {
       console.error('Error checking user role:', error);
@@ -127,7 +122,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoading(true);
         setError(null);
         
-        // Get initial session
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -144,21 +138,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setSession(session);
           setUser(session.user);
           
-          try {
-            const { isAdmin: adminRole, isCanvasser: canvasserRole } = await checkUserRole(session.user.id, session.user.email);
-            if (mounted) {
-              setIsAdmin(adminRole);
-              setIsCanvasser(canvasserRole);
-              setError(null);
-              console.log('Role assignment complete:', { adminRole, canvasserRole });
-            }
-          } catch (roleError) {
-            console.error('Role check failed during initialization:', roleError);
-            if (mounted) {
-              setIsAdmin(false);
-              setIsCanvasser(false);
-              setError('Failed to determine user role');
-            }
+          const { isAdmin: adminRole, isCanvasser: canvasserRole } = await checkUserRole(session.user.id, session.user.email);
+          if (mounted) {
+            setIsAdmin(adminRole);
+            setIsCanvasser(canvasserRole);
+            setError(null);
+            console.log('Initial role assignment:', { adminRole, canvasserRole });
           }
         } else {
           console.log('No initial session found');
@@ -180,7 +165,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
@@ -191,21 +175,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          try {
-            const { isAdmin: adminRole, isCanvasser: canvasserRole } = await checkUserRole(session.user.id, session.user.email);
-            if (mounted) {
-              setIsAdmin(adminRole);
-              setIsCanvasser(canvasserRole);
-              setError(null);
-              console.log('Auth state change role assignment:', { adminRole, canvasserRole });
-            }
-          } catch (error) {
-            console.error('Failed to check role after auth change:', error);
-            if (mounted) {
-              setIsAdmin(false);
-              setIsCanvasser(false);
-              setError('Failed to determine user role');
-            }
+          const { isAdmin: adminRole, isCanvasser: canvasserRole } = await checkUserRole(session.user.id, session.user.email);
+          if (mounted) {
+            setIsAdmin(adminRole);
+            setIsCanvasser(canvasserRole);
+            setError(null);
+            console.log('Auth state change role assignment:', { adminRole, canvasserRole });
           }
         } else {
           if (mounted) {
@@ -277,7 +252,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
     } catch (error) {
       console.error('Sign out error:', error);
-      // Force clear state even if signOut fails
       setUser(null);
       setSession(null);
       setIsAdmin(false);

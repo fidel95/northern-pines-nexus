@@ -89,7 +89,6 @@ const CanvasserAuth = () => {
         title: "Login Successful",
         description: "Welcome back! Redirecting to your dashboard...",
       });
-      // Navigation will be handled by useEffect when canvasser state updates
     } else if (error) {
       toast({
         title: "Login Failed",
@@ -101,7 +100,7 @@ const CanvasserAuth = () => {
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4">
-      <Card className="w-full max-w-md bg-gray-900 border-blue-800 shadow-2xl">
+      <Card className="w-full max-w-md bg-gray-900 border-gray-700 shadow-2xl">
         <CardHeader className="text-center pb-8">
           <div className="mx-auto mb-4 w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center shadow-lg">
             <MapPin className="w-8 h-8 text-white" />
@@ -124,7 +123,7 @@ const CanvasserAuth = () => {
                     if (errors.email) setErrors({...errors, email: undefined});
                   }}
                   placeholder="Enter your email"
-                  className={`pl-10 bg-gray-800 border-blue-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`pl-10 bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     errors.email ? 'border-red-500' : ''
                   }`}
                   disabled={isLoading}
@@ -151,7 +150,7 @@ const CanvasserAuth = () => {
                     if (errors.password) setErrors({...errors, password: undefined});
                   }}
                   placeholder="Enter your password"
-                  className={`pl-10 pr-10 bg-gray-800 border-blue-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`pl-10 pr-10 bg-gray-800 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     errors.password ? 'border-red-500' : ''
                   }`}
                   disabled={isLoading}

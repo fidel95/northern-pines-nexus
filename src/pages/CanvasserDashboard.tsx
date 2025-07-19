@@ -36,6 +36,7 @@ const CanvasserDashboard = () => {
 
   useEffect(() => {
     if (!isLoading && (!user || !isCanvasser)) {
+      console.log('Redirecting to canvasser auth - no user or not canvasser');
       navigate('/canvasser-auth');
     }
   }, [user, isCanvasser, isLoading, navigate]);
@@ -46,6 +47,8 @@ const CanvasserDashboard = () => {
       
       try {
         setCanvasserLoading(true);
+        console.log('Fetching canvasser data for:', user.email);
+        
         const { data, error } = await supabase
           .from('canvassers')
           .select('*')
@@ -63,6 +66,7 @@ const CanvasserDashboard = () => {
           return;
         }
         
+        console.log('Canvasser data loaded successfully:', data.name);
         setCanvasser(data);
       } catch (error) {
         console.error('Exception fetching canvasser data:', error);
@@ -149,7 +153,7 @@ const CanvasserDashboard = () => {
 
   return (
     <div className="min-h-screen bg-black">
-      <div className="bg-gray-900 border-b border-blue-800 p-4">
+      <div className="bg-gray-900 border-b border-gray-700 p-4">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
@@ -183,7 +187,7 @@ const CanvasserDashboard = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Card className="bg-gray-900 border-blue-800 mb-8">
+        <Card className="bg-gray-900 border-gray-700 mb-8">
           <CardContent className="p-6">
             <h2 className="text-2xl font-bold text-white mb-4">Welcome to Your Dashboard</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
@@ -204,7 +208,7 @@ const CanvasserDashboard = () => {
         </Card>
 
         <Tabs defaultValue="clock" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-gray-900 border-blue-800">
+          <TabsList className="grid w-full grid-cols-4 bg-gray-900 border-gray-700">
             <TabsTrigger 
               value="clock" 
               className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white flex items-center gap-2"

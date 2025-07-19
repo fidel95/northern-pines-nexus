@@ -25,10 +25,11 @@ const Dashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!isLoading && (!user || !isAdmin)) {
+      console.log('Redirecting to auth - no user or not admin');
       navigate('/auth');
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isAdmin, isLoading, navigate]);
 
   const handleLogout = async () => {
     try {
@@ -103,35 +104,15 @@ const Dashboard = () => {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-4">Please Sign In</h1>
-          <p className="text-gray-400 mb-6">You need to be signed in to access the dashboard.</p>
-          <div className="flex gap-4 justify-center">
-            <Button 
-              onClick={() => navigate('/auth')} 
-              className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
-            >
-              <LogIn className="w-4 h-4" />
-              Sign In
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
+  if (!user || !isAdmin) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
           <p className="text-gray-400 mb-6">You need admin privileges to access this dashboard.</p>
           <div className="space-y-2 text-sm text-gray-500 mb-6">
-            <p>Current user: {user.email}</p>
-            <p>Role: {isAdmin ? 'Admin' : 'User'}</p>
+            <p>Current user: {user?.email || 'None'}</p>
+            <p>Admin status: {isAdmin ? 'Yes' : 'No'}</p>
           </div>
           <div className="flex gap-4 justify-center">
             <Button 
@@ -188,7 +169,7 @@ const Dashboard = () => {
         <DashboardStats />
         
         <Tabs defaultValue="leads" className="mt-8">
-          <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 bg-gray-900 border-blue-800 shadow-lg overflow-x-auto">
+          <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 bg-gray-900 border-gray-700 shadow-lg overflow-x-auto">
             <TabsTrigger value="leads" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200 text-xs sm:text-sm">Leads</TabsTrigger>
             <TabsTrigger value="submissions" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200 text-xs sm:text-sm">Submissions</TabsTrigger>
             <TabsTrigger value="quotes" className="text-gray-300 data-[state=active]:bg-blue-600 data-[state=active]:text-white transition-all duration-200 text-xs sm:text-sm">Quotes</TabsTrigger>
