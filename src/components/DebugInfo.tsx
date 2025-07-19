@@ -1,27 +1,21 @@
 
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCanvasserAuth } from '@/contexts/CanvasserAuthContext';
 
-export const DebugInfo: React.FC = () => {
-  const auth = useAuth();
-  const canvasserAuth = useCanvasserAuth();
+export const DebugInfo = () => {
+  const { user, isAdmin, isCanvasser, isLoading, error } = useAuth();
 
-  if (process.env.NODE_ENV !== 'development') {
-    return null;
-  }
+  if (!user) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 bg-gray-900 text-white p-4 rounded-lg text-xs max-w-sm border border-gray-700 z-50">
+    <div className="fixed bottom-4 right-4 bg-gray-800 text-white p-4 rounded-lg text-xs max-w-sm z-50">
       <h3 className="font-bold mb-2">Debug Info</h3>
       <div className="space-y-1">
-        <div>Auth Loading: {auth.isLoading ? 'Yes' : 'No'}</div>
-        <div>User: {auth.user ? auth.user.email : 'None'}</div>
-        <div>Admin: {auth.isAdmin ? 'Yes' : 'No'}</div>
-        <div>Canvasser: {auth.isCanvasser ? 'Yes' : 'No'}</div>
-        <div>Auth Error: {auth.error || 'None'}</div>
-        <div>Canvasser Loading: {canvasserAuth.isLoading ? 'Yes' : 'No'}</div>
-        <div>Canvasser User: {canvasserAuth.canvasser ? canvasserAuth.canvasser.email : 'None'}</div>
+        <p>User: {user?.email || 'None'}</p>
+        <p>Admin: {isAdmin ? 'Yes' : 'No'}</p>
+        <p>Canvasser: {isCanvasser ? 'Yes' : 'No'}</p>
+        <p>Loading: {isLoading ? 'Yes' : 'No'}</p>
+        {error && <p className="text-red-400">Error: {error}</p>}
       </div>
     </div>
   );

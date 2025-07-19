@@ -47,46 +47,46 @@ function App() {
         <TooltipProvider>
           <AuthProvider>
             <BrowserRouter>
-                <div className="min-h-screen">
-                  <Suspense fallback={<AppLoadingFallback />}>
-                    <Routes>
-                      {/* Public Routes */}
-                      <Route path="/" element={<Index />} />
-                      <Route path="/about-us" element={<AboutUs />} />
-                      <Route path="/contact-us" element={<ContactUs />} />
-                      <Route path="/services" element={<Services />} />
-                      <Route path="/projects" element={<Projects />} />
-                      
-                      {/* Auth Routes */}
-                      <Route path="/auth" element={<Auth />} />
-                      <Route path="/canvasser-auth" element={<CanvasserAuth />} />
-                      
-                      {/* Protected Admin Routes */}
-                      <Route 
-                        path="/dashboard" 
-                        element={
-                          <ProtectedRoute requireAdmin>
-                            <Dashboard />
-                          </ProtectedRoute>
-                        } 
-                      />
-                      
-                      {/* Protected Canvasser Routes */}
-                      <Route 
-                        path="/canvasser-dashboard" 
-                        element={
-                          <ProtectedRoute requireCanvasser>
-                            <CanvasserDashboard />
-                          </ProtectedRoute>
-                        } 
-                      />
-                      
-                      {/* 404 Route */}
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Suspense>
-                  <Toaster />
-                </div>
+              <div className="min-h-screen">
+                <Suspense fallback={<AppLoadingFallback />}>
+                  <Routes>
+                    {/* Public Routes */}
+                    <Route path="/" element={<Index />} />
+                    <Route path="/about-us" element={<AboutUs />} />
+                    <Route path="/contact-us" element={<ContactUs />} />
+                    <Route path="/services" element={<Services />} />
+                    <Route path="/projects" element={<Projects />} />
+                    
+                    {/* Auth Routes */}
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/canvasser-auth" element={<CanvasserAuth />} />
+                    
+                    {/* Protected Admin Routes */}
+                    <Route 
+                      path="/dashboard" 
+                      element={
+                        <ProtectedRoute requireAdmin>
+                          <Dashboard />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    
+                    {/* Protected Canvasser Routes */}
+                    <Route 
+                      path="/canvasser-dashboard" 
+                      element={
+                        <ProtectedRoute requireCanvasser>
+                          <CanvasserDashboard />
+                        </ProtectedRoute>
+                      } 
+                    />
+                    
+                    {/* 404 Route */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+                <Toaster />
+              </div>
             </BrowserRouter>
           </AuthProvider>
         </TooltipProvider>

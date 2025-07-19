@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -119,22 +120,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let mounted = true;
-    let initializationTimeout: NodeJS.Timeout;
 
     const initializeAuth = async () => {
       try {
         console.log('Initializing authentication...');
         setIsLoading(true);
         setError(null);
-        
-        // Set a maximum initialization time
-        initializationTimeout = setTimeout(() => {
-          if (mounted) {
-            console.log('Auth initialization timeout, setting loading to false');
-            setIsLoading(false);
-            setError('Authentication initialization timeout');
-          }
-        }, 15000);
         
         // Get initial session
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -178,7 +169,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         
         if (mounted) {
-          clearTimeout(initializationTimeout);
           setIsLoading(false);
         }
       } catch (error) {
@@ -196,11 +186,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!mounted) return;
 
         console.log('Auth state changed:', event, session?.user?.email);
-        
-        // Don't show loading for token refresh events
-        if (event !== 'TOKEN_REFRESHED') {
-          setIsLoading(true);
-        }
         
         setSession(session);
         setUser(session?.user ?? null);
@@ -230,7 +215,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
         
-        if (mounted && event !== 'TOKEN_REFRESHED') {
+        if (mounted) {
           setIsLoading(false);
         }
       }
@@ -240,9 +225,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       mounted = false;
-      if (initializationTimeout) {
-        clearTimeout(initializationTimeout);
-      }
       subscription.unsubscribe();
     };
   }, [checkUserRole]);
@@ -272,8 +254,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const authError = error as AuthError;
       setError(authError.message);
       return { error: authError };
-    } finally {
-      // Don't set loading to false here - let the auth state change handle it
     }
   };
 
