@@ -45,6 +45,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('user_id', userId)
         .maybeSingle();
       
+      console.log('Admin check:', { adminData, adminError });
+      
       if (adminError && adminError.code !== 'PGRST116') {
         console.error('Error checking admin status:', adminError);
       }
@@ -61,6 +63,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .eq('active', true)
           .maybeSingle();
         
+        console.log('Canvasser check:', { canvasserData, canvasserError });
+        
         if (canvasserError && canvasserError.code !== 'PGRST116') {
           console.error('Error checking canvasser status:', canvasserError);
         }
@@ -68,7 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isCanvasserRole = !canvasserError && !!canvasserData;
       }
       
-      console.log('Role check results:', { isAdminRole, isCanvasserRole });
+      console.log('Role check results:', { isAdminRole, isCanvasserRole, userId, userEmail });
       return { isAdmin: isAdminRole, isCanvasser: isCanvasserRole };
     } catch (error) {
       console.error('Error checking user role:', error);

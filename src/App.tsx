@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { AuthDebug } from "@/components/AuthDebug";
 
 // Lazy load components for better performance
 const Index = lazy(() => import("./pages/Index"));
@@ -85,6 +86,7 @@ function App() {
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>
+                <AuthDebug />
                 <Toaster />
               </div>
             </BrowserRouter>
